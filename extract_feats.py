@@ -85,7 +85,7 @@ mag_spec = abs(comp_spec)
 
 
 # Mel warping
-filts = gen_mel_filts(25, 513, samp_rate) # 1024 point FFT
+filts = gen_mel_filts(40, 513, samp_rate) # 1024 point FFT
 mel_spec = numpy.dot(mag_spec,filts)
 
 # Mel log spectrum
@@ -93,3 +93,8 @@ mel_log_spec = mel_spec #trust me on this
 nonzero = mel_log_spec > 0
 mel_log_spec[nonzero] = numpy.log(mel_log_spec[nonzero])
 
+# Mel cepstrum
+mel_comp_cep = numpy.fft.rfft(mel_log_spec, n=76) #Not really complex cep
+mel_cep = mel_comp_cep.real
+# Discarding higher order cepstra
+mel_cep = mel_cep[:,0:13]
