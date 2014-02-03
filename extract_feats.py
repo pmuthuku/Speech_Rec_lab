@@ -113,4 +113,6 @@ numpy.savetxt('mel_log_spec.data', mel_log_spec)
 mel_comp_cep = numpy.fft.rfft(mel_log_spec, n=76) #Not really complex cep
 mel_cep = mel_comp_cep.real
 # Discarding higher order cepstra
+numpy.savetxt('recomp_cep.data', mel_cep)
 mel_cep = mel_cep[:,0:13]
+
