@@ -9,7 +9,26 @@ if len(sys.argv) < 2:
     sys.exit(-1)
 
 
+def get_frames(speech_sig, frame_length, frame_shift):
+
+    remainder = speech_sig.shape[0] % frame_length
+    speech_sig_zpad = numpy.append(speech_sig, numpy.zeros( (frame_length-remainder), ) )
+    
+    speech_frames =[]
+    start_pos = 0
+    while True:
+        windowed_frame = speech_sig_zpad[start_pos:start_pos+frame_length]* numpy.hamming(frame_length)
+        speech_frames.append(windowed_frame)
+        start_pos = start_pos + frame_shift
+        if start_pos+frame_length >= speech_sig_zpad.shape[0]:
+            break
+
+    return numpy.array(speech_frames)
+
+
+
 def gen_mel_filts(num_filts, framelength, samp_freq):
+
     mel_filts = numpy.zeros((framelength, num_filts))
     step_size = int(framelength/float((num_filts + 1))) #Sketch it out to understand
     filt_width = math.floor(step_size*2)
@@ -67,20 +86,15 @@ wf.close()
 
 # NOTE: These frames are not the same 'frames' as the ones in the wav file 
 frame_size = 0.025 #in seconds
-frame_length = int(samp_rate*frame_size)
-num_frames = int( math.ceil(data.shape[0]/float(frame_length)) )
-data.resize(num_frames, frame_length)
-
-
-
-# Let's apply a window to our frames 
-hamm_win = numpy.hamming(frame_length)
-data = data * hamm_win #Broadcasting should do the right thing
+frame_shift = 0.0125 #in seconds
+frame_length = int(samp_rate * frame_size)
+frame_shift_length = int(samp_rate * frame_shift)
+speech_frames = get_frames(data, frame_length, frame_shift_length)
 
 
 
 #Let's compute the spectrum
-comp_spec = numpy.fft.rfft(data,n=1024)
+comp_spec = numpy.fft.rfft(speech_frames,n=1024)
 mag_spec = abs(comp_spec)
 numpy.savetxt('mag_spec.data',mag_spec)
 
