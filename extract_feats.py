@@ -82,16 +82,18 @@ data = data * hamm_win #Broadcasting should do the right thing
 #Let's compute the spectrum
 comp_spec = numpy.fft.rfft(data,n=1024)
 mag_spec = abs(comp_spec)
-
+numpy.savetxt('mag_spec.data',mag_spec)
 
 # Mel warping
 filts = gen_mel_filts(40, 513, samp_rate) # 1024 point FFT
 mel_spec = numpy.dot(mag_spec,filts)
+numpy.savetxt('mel_spec.data', mel_spec)
 
 # Mel log spectrum
 mel_log_spec = mel_spec #trust me on this
 nonzero = mel_log_spec > 0
 mel_log_spec[nonzero] = numpy.log(mel_log_spec[nonzero])
+numpy.savetxt('mel_log_spec.data', mel_log_spec)
 
 # Mel cepstrum
 mel_comp_cep = numpy.fft.rfft(mel_log_spec, n=76) #Not really complex cep
