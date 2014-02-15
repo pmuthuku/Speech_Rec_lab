@@ -3,6 +3,7 @@ import numpy as np
 from termcolor import colored
 
 prune_thresh = True
+use_beam = True
 
 # Creating a class for every element in the DTW matrix
 class matrix_obj:
@@ -53,6 +54,7 @@ for i in xrange(len(template_chars)):
 
 # Let's do DTW !!
 pruning_threshold = 3 
+beam_thresh = 3
 for i in xrange(len(inp_chars)):
 
     for j in xrange(len(template_chars)):
@@ -126,6 +128,13 @@ for i in xrange(len(inp_chars)):
         else:
             DTW_matrix[j][i].back_ptr = (-9,-9)
             DTW_matrix[j][i].symb = '\\'
+
+    if use_beam == True:
+        best_cost_sofar = 99999
+        for j in xrange(len(template_chars)):
+            if  DTW_matrix[j][i].lowest_cost <= best_cost_sofar:
+                best_cost_sofar = DTW_matrix[j][i].lowest_cost
+        pruning_threshold = best_cost_sofar + beam_thresh
         
 
 # Print out the DTW matrix
