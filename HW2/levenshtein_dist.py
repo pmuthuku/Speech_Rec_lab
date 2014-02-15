@@ -1,0 +1,153 @@
+import sys
+import numpy as np
+from termcolor import colored
+
+# Creating a class for every element in the DTW matrix
+class matrix_obj:
+    def __init__(self):
+        self.lowest_cost = 99999999 # Stores lowest cost
+        self.back_ptr = None        # Tuple points to lowest input point
+        self.is_on = True           # Is this on (for beam search)
+        self.symb = None            # Used just for pretty printing
+
+
+# Compare characters
+def get_comp_cost(char_1, char_2):
+    if char_1 == char_2:
+        comp_cost=0
+    else:
+        comp_cost=1
+    return comp_cost
+    
+    
+
+if len(sys.argv) <= 2:
+    print "Usage:\npython levenshtein_dist.py input template\n"
+    exit(0)
+
+
+word1 = sys.argv[1].lower()
+word2 = sys.argv[2].lower()
+
+inp_chars = list(word1)
+template_chars = list(word2)
+
+# Appending a null character at the beginning of each string
+inp_chars.insert(0,'*')
+template_chars.insert(0,'*')
+
+# Creating a list of lists for the DTW matrix
+DTW_matrix =[]
+for i in xrange(len(template_chars)):
+
+    DTW_row = []
+    for i in xrange(len(inp_chars)):
+
+        DTW_row.append(matrix_obj())
+
+    DTW_matrix.append(DTW_row)
+
+
+
+# Let's do DTW !!
+for i in xrange(len(inp_chars)):
+
+    for j in xrange(len(template_chars)):
+
+        # Let's make an array to find the minimum costs
+        if (i==0 and j== 0):
+            costs=[0 + get_comp_cost(inp_chars[i], template_chars[j]), 
+                   99999, 99999]
+            # diag | horiz|  vert|
+            
+        elif( i == 0 ):
+            costs = [99999, 99999, 
+                     DTW_matrix[j-1][i].lowest_cost
+                     + get_comp_cost(inp_chars[i], template_chars[j])]
+
+        elif ( j == 0):
+            costs = [99999, 
+                     DTW_matrix[j][i-1].lowest_cost
+                     + get_comp_cost(inp_chars[i], template_chars[j]), 
+                     99999]
+            
+        else:
+            costs = [DTW_matrix[j-1][i-1].lowest_cost 
+                     + get_comp_cost(inp_chars[i], template_chars[j]), 
+                     DTW_matrix[j][i-1].lowest_cost 
+                     + get_comp_cost(inp_chars[i], template_chars[j]),
+                     DTW_matrix[j-1][i].lowest_cost 
+                     + get_comp_cost(inp_chars[i], template_chars[j])]
+
+            
+        DTW_matrix[j][i].lowest_cost =  np.min(costs)
+        min_ptr = np.argmin(costs)
+
+        if (i!=0 or j!=0):
+            
+            if min_ptr == 0:
+                DTW_matrix[j][i].back_ptr = (j-1,i-1)
+                DTW_matrix[j][i].symb = '/'
+            elif min_ptr == 1:
+                DTW_matrix[j][i].back_ptr = (j, i-1)
+                DTW_matrix[j][i].symb = '-'
+            else:
+                DTW_matrix[j][i].back_ptr = (j-1, i)
+                DTW_matrix[j][i].symb = '|'
+            
+        else:
+            DTW_matrix[j][i].back_ptr = (-9,-9)
+            DTW_matrix[j][i].symb = '\\'
+        
+
+# Print out the DTW matrix
+print 'DTW Matrix'
+for j in reversed(xrange(len(template_chars))):
+
+    print colored(template_chars[j],'blue'),'\t',
+    for i in xrange(len(inp_chars)):
+
+        print DTW_matrix[j][i].lowest_cost,'\t',
+
+    print '\n',
+
+print '\t',
+for i in xrange(len(inp_chars)):
+    print colored(inp_chars[i],'blue'),'\t',
+print '\n\n\n',
+
+print 'DTW backpointers'
+# Print out the backpointer matrix
+for j in reversed(xrange(len(template_chars))):
+
+    print colored(template_chars[j],'blue'),'\t',
+    for i in xrange(len(inp_chars)):
+
+        print DTW_matrix[j][i].back_ptr,'\t',
+
+    print '\n',
+
+print '\t',
+for i in xrange(len(inp_chars)):
+    print colored(inp_chars[i],'blue'),'\t',
+print '\n\n\n',
+
+
+print 'DTW backpointer visualization'
+# Print out the backpointers visualization
+for j in reversed(xrange(len(template_chars))):
+
+    print colored(template_chars[j],'blue'),'\t',
+    for i in xrange(len(inp_chars)):
+
+        print DTW_matrix[j][i].symb,' ',
+
+    print '\n',
+
+print '\t',
+for i in xrange(len(inp_chars)):
+    print colored(inp_chars[i],'blue'),' ',
+print '\n',
+
+
+
