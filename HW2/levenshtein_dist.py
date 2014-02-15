@@ -2,6 +2,8 @@ import sys
 import numpy as np
 from termcolor import colored
 
+prune_thresh = True
+
 # Creating a class for every element in the DTW matrix
 class matrix_obj:
     def __init__(self):
@@ -50,6 +52,7 @@ for i in xrange(len(template_chars)):
 
 
 # Let's do DTW !!
+pruning_threshold = 3 
 for i in xrange(len(inp_chars)):
 
     for j in xrange(len(template_chars)):
@@ -61,27 +64,49 @@ for i in xrange(len(inp_chars)):
             # diag | horiz|  vert|
             
         elif( i == 0 ):
-            costs = [99999, 99999, 
-                     DTW_matrix[j-1][i].lowest_cost
-                     + get_comp_cost(inp_chars[i], template_chars[j])]
+            if DTW_matrix[j-1][i].is_on == True:
+                costs = [99999, 99999, 
+                         DTW_matrix[j-1][i].lowest_cost
+                         + get_comp_cost(inp_chars[i], template_chars[j])]
+            else:
+                costs = [99999, 99999, 99999]
+
 
         elif ( j == 0):
-            costs = [99999, 
-                     DTW_matrix[j][i-1].lowest_cost
-                     + get_comp_cost(inp_chars[i], template_chars[j]), 
-                     99999]
+            if DTW_matrix[j][i-1].is_on == True:
+                costs = [99999, 
+                         DTW_matrix[j][i-1].lowest_cost
+                         + get_comp_cost(inp_chars[i], template_chars[j]), 
+                         99999]
+            else:
+                costs = [99999, 99999, 99999]
             
         else:
-            costs = [DTW_matrix[j-1][i-1].lowest_cost 
-                     + get_comp_cost(inp_chars[i], template_chars[j]), 
-                     DTW_matrix[j][i-1].lowest_cost 
-                     + get_comp_cost(inp_chars[i], template_chars[j]),
-                     DTW_matrix[j-1][i].lowest_cost 
-                     + get_comp_cost(inp_chars[i], template_chars[j])]
+            if (DTW_matrix[j-1][i-1].is_on == False and
+                DTW_matrix[j][i-1].is_on == False and
+                DTW_matrix[j-1][i].is_on == False):
+                costs = [99999, 99999, 99999]
+            else:
+                costs = [DTW_matrix[j-1][i-1].lowest_cost 
+                         + get_comp_cost(inp_chars[i], template_chars[j]), 
+                         DTW_matrix[j][i-1].lowest_cost 
+                         + get_comp_cost(inp_chars[i], template_chars[j]),
+                         DTW_matrix[j-1][i].lowest_cost 
+                         + get_comp_cost(inp_chars[i], template_chars[j])]
 
+        
             
         DTW_matrix[j][i].lowest_cost =  np.min(costs)
         min_ptr = np.argmin(costs)
+
+        if prune_thresh == True:
+
+            if(DTW_matrix[j][i].lowest_cost > pruning_threshold):
+                DTW_matrix[j][i].is_on = False
+                DTW_matrix[j][i].lowest_cost = 99999
+                min_ptr = 5
+
+
 
         if (i!=0 or j!=0):
             
@@ -91,9 +116,12 @@ for i in xrange(len(inp_chars)):
             elif min_ptr == 1:
                 DTW_matrix[j][i].back_ptr = (j, i-1)
                 DTW_matrix[j][i].symb = '-'
-            else:
+            elif min_ptr ==2:
                 DTW_matrix[j][i].back_ptr = (j-1, i)
                 DTW_matrix[j][i].symb = '|'
+            else:
+                DTW_matrix[j][i].back_ptr = (-1, -1)
+                DTW_matrix[j][i].symb = 'x'
             
         else:
             DTW_matrix[j][i].back_ptr = (-9,-9)
@@ -106,24 +134,11 @@ for j in reversed(xrange(len(template_chars))):
 
     print colored(template_chars[j],'blue'),'\t',
     for i in xrange(len(inp_chars)):
-
-        print DTW_matrix[j][i].lowest_cost,'\t',
-
-    print '\n',
-
-print '\t',
-for i in xrange(len(inp_chars)):
-    print colored(inp_chars[i],'blue'),'\t',
-print '\n\n\n',
-
-print 'DTW backpointers'
-# Print out the backpointer matrix
-for j in reversed(xrange(len(template_chars))):
-
-    print colored(template_chars[j],'blue'),'\t',
-    for i in xrange(len(inp_chars)):
-
-        print DTW_matrix[j][i].back_ptr,'\t',
+        
+        if DTW_matrix[j][i].is_on == False:
+            print colored('x','red'),'\t',
+        else:
+            print DTW_matrix[j][i].lowest_cost,'\t',
 
     print '\n',
 
@@ -131,6 +146,22 @@ print '\t',
 for i in xrange(len(inp_chars)):
     print colored(inp_chars[i],'blue'),'\t',
 print '\n\n\n',
+
+# print 'DTW backpointers'
+# # Print out the backpointer matrix
+# for j in reversed(xrange(len(template_chars))):
+
+#     print colored(template_chars[j],'blue'),'\t',
+#     for i in xrange(len(inp_chars)):
+
+#         print DTW_matrix[j][i].back_ptr,'\t',
+
+#     print '\n',
+
+# print '\t',
+# for i in xrange(len(inp_chars)):
+#     print colored(inp_chars[i],'blue'),'\t',
+# print '\n\n\n',
 
 
 print 'DTW backpointer visualization'
@@ -140,7 +171,10 @@ for j in reversed(xrange(len(template_chars))):
     print colored(template_chars[j],'blue'),'\t',
     for i in xrange(len(inp_chars)):
 
-        print DTW_matrix[j][i].symb,' ',
+        if DTW_matrix[j][i].is_on == False:
+            print colored(DTW_matrix[j][i].symb,'red'),' ',
+        else:
+            print DTW_matrix[j][i].symb,' ',
 
     print '\n',
 
