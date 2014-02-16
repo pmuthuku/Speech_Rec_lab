@@ -156,24 +156,24 @@ for i in xrange(len(inp_chars)):
         pruning_threshold = best_cost_sofar + beam_thresh
         
 
-# Print out the DTW matrix
-print 'DTW Matrix'
-for j in reversed(xrange(len(template_chars))):
+# # Print out the DTW matrix
+# print 'DTW Matrix'
+# for j in reversed(xrange(len(template_chars))):
 
-    print colored(template_chars[j],'blue'),'\t',
-    for i in xrange(len(inp_chars)):
+#     print colored(template_chars[j],'blue'),'\t',
+#     for i in xrange(len(inp_chars)):
         
-        if DTW_matrix[j][i].is_on == False:
-            print colored('x','red'),'\t',
-        else:
-            print DTW_matrix[j][i].lowest_cost,'\t',
+#         if DTW_matrix[j][i].is_on == False:
+#             print colored('x','red'),'\t',
+#         else:
+#             print DTW_matrix[j][i].lowest_cost,'\t',
 
-    print '\n',
+#     print '\n',
 
-print '\t',
-for i in xrange(len(inp_chars)):
-    print colored(inp_chars[i],'blue'),'\t',
-print '\n\n\n',
+# print '\t',
+# for i in xrange(len(inp_chars)):
+#     print colored(inp_chars[i],'blue'),'\t',
+# print '\n\n\n',
 
 # print 'DTW backpointers'
 # # Print out the backpointer matrix
@@ -192,24 +192,24 @@ print '\n\n\n',
 # print '\n\n\n',
 
 
-print 'DTW backpointer visualization'
-# Print out the backpointers visualization
-for j in reversed(xrange(len(template_chars))):
+# print 'DTW backpointer visualization'
+# # Print out the backpointers visualization
+# for j in reversed(xrange(len(template_chars))):
 
-    print colored(template_chars[j],'blue'),'\t',
-    for i in xrange(len(inp_chars)):
+#     print colored(template_chars[j],'blue'),'\t',
+#     for i in xrange(len(inp_chars)):
 
-        if DTW_matrix[j][i].is_on == False:
-            print colored(DTW_matrix[j][i].symb,'red'),' ',
-        else:
-            print DTW_matrix[j][i].symb,' ',
+#         if DTW_matrix[j][i].is_on == False:
+#             print colored(DTW_matrix[j][i].symb,'red'),' ',
+#         else:
+#             print DTW_matrix[j][i].symb,' ',
 
-    print '\n',
+#     print '\n',
 
-print '\t',
-for i in xrange(len(inp_chars)):
-    print colored(inp_chars[i],'blue'),' ',
-print '\n\n',
+# print '\t',
+# for i in xrange(len(inp_chars)):
+#     print colored(inp_chars[i],'blue'),' ',
+# print '\n\n',
 
 best_cost = 99999
 best_ptr = None
