@@ -1,3 +1,5 @@
+''' This code computes the Levenshtein distance between an input word and
+multiple template words in a file'''
 import sys
 import numpy as np
 from termcolor import colored
@@ -22,22 +24,33 @@ def get_comp_cost(char_1, char_2):
         comp_cost=1
     return comp_cost
     
+
+# Make a long string with all the templates in the file
+def make_str(filenm):
+    long_str=''
+    with open(filenm,'r') as f:
+        for line in f:
+            line = line.rstrip('\n')
+            long_str = long_str+'*'+ line.lower()
+    return long_str
     
 
+
 if len(sys.argv) <= 2:
-    print "Usage:\npython levenshtein_dist.py input template\n"
-    exit(0)
+    print "Usage:\npython levenshtein_dist_2.py input template_file\n"
+    sys.exit(0)
 
 
 word1 = sys.argv[1].lower()
-word2 = sys.argv[2].lower()
+filenm = sys.argv[2]
+word2 = make_str(filenm)
 
 inp_chars = list(word1)
 template_chars = list(word2)
 
 # Appending a null character at the beginning of each string
 inp_chars.insert(0,'*')
-template_chars.insert(0,'*')
+#template_chars.insert(0,'*')
 
 # Creating a list of lists for the DTW matrix
 DTW_matrix =[]
@@ -72,6 +85,9 @@ for i in xrange(len(inp_chars)):
                          + get_comp_cost(inp_chars[i], template_chars[j])]
             else:
                 costs = [99999, 99999, 99999]
+            # Start of new word so resetting costs
+            if template_chars[j] == '*':
+                costs = [0, 99999, 99999]
 
 
         elif ( j == 0):
@@ -95,6 +111,9 @@ for i in xrange(len(inp_chars)):
                          + get_comp_cost(inp_chars[i], template_chars[j]),
                          DTW_matrix[j-1][i].lowest_cost 
                          + get_comp_cost(inp_chars[i], template_chars[j])]
+                # End of template word so turning it off
+                if template_chars[j] == '*':
+                    costs = [99999, 99999, 99999]
 
         
             
@@ -192,6 +211,27 @@ for i in xrange(len(inp_chars)):
     print colored(inp_chars[i],'blue'),' ',
 print '\n\n',
 
-print 'Edit distance: ',DTW_matrix[len(template_chars)-1][len(inp_chars)-1].lowest_cost
+best_cost = 99999
+best_ptr = None
+for j in xrange(len(template_chars)):
+    if DTW_matrix[j][len(inp_chars)-1].lowest_cost < best_cost:
+        best_cost = DTW_matrix[j][len(inp_chars)-1].lowest_cost
+        best_ptr = (j, len(inp_chars)-1)
+
+print 'Edit distance: ',best_cost
+
+right_word = []
+# Let's unwrap and print out the closest word
+while (template_chars[best_ptr[0]] != '*' and 
+       inp_chars[best_ptr[1]]!= '*'):
+    
+    #This is an insertion error
+    if DTW_matrix[best_ptr[0]][best_ptr[1]].symb != '-':
+        right_word.insert(0,template_chars[best_ptr[0]])
+
+    best_ptr = DTW_matrix[best_ptr[0]][best_ptr[1]].back_ptr
+
+print ''.join(right_word)
+
 
 
