@@ -4,6 +4,7 @@ import sys
 import os
 import numpy
 import re
+import time
 
 def lvdis(temp,inp):
 	m=len(temp)
@@ -40,8 +41,8 @@ def lvdis(temp,inp):
 def lvdisprdis(temp,inp,th):
 	m=len(temp)
 	n=len(inp)
-	#print m
-	lvdst=numpy.ones((m+1,n+1))
+	th=int(th)
+	lvdst=numpy.zeros((m+1,n+1))
 	#lvdst=-1*lvdst
 	back=numpy.ones((m+1,n+1))
 	back=-1*back
@@ -57,6 +58,7 @@ def lvdisprdis(temp,inp,th):
 
 			if lvdst[m-1-j,i] < th  or lvdst[m-1-(j-1),i+1] < th  or lvdst[m-1-(j-1),i] < th:
  
+				#print "here"
 				ccost=[]
 				if sin==ste:
 					cost=0
@@ -71,7 +73,7 @@ def lvdisprdis(temp,inp,th):
 				id=ccost.index(min(ccost))
 				back[m-1-j,i+1]=id
 			else:
-				lvdst[m-1-j,i+1]=float('inf')
+				lvdst[m-1-j,i+1]=99
 			
 	#print lvdst[0,n]
 	return(lvdst,back,lvdst[0,n])
@@ -79,8 +81,8 @@ def lvdisprdis(temp,inp,th):
 def lvdisprbm(temp,inp,th):
 	m=len(temp)
 	n=len(inp)
-	#print m
-	lvdst=numpy.ones((m+1,n+1))
+	th=int(th)
+	lvdst=numpy.zeros((m+1,n+1))
 	#lvdst=-1*lvdst
 	back=numpy.ones((m+1,n+1))
 	back=-1*back
@@ -94,7 +96,7 @@ def lvdisprbm(temp,inp,th):
 	for i,sin in enumerate(inp):
 		for j,ste in enumerate(temp):
 
-			if i==1:
+			if i==0:
  
 				ccost=[]
 				if sin==ste:
@@ -110,7 +112,7 @@ def lvdisprbm(temp,inp,th):
 				id=ccost.index(min(ccost))
 				back[m-1-j,i+1]=id
 			else:
-				if lvdst[m-1-j,i]!=float('inf')  or lvdst[m-1-(j-1),i+1]!=float('inf')  or lvdst[m-1-(j-1),i]!=float('inf'):
+				if lvdst[m-1-j,i]!=99  or lvdst[m-1-(j-1),i+1]!=99  or lvdst[m-1-(j-1),i]!=99:
 					ccost=[]
 					if sin==ste:
 						cost=0
@@ -125,10 +127,10 @@ def lvdisprbm(temp,inp,th):
 					id=ccost.index(min(ccost))
 					back[m-1-j,i+1]=id
 				else:
-					lvdst[m-1-j,i+1]=float('inf')
+					lvdst[m-1-j,i+1]=99#float('inf')
 		x=lvdst[:,i+1]
 		p=numpy.nonzero(x > min(x)+th)
-		x[p]=float('inf')
+		x[p]=99
 		
 		
 	#print lvdst[0,n]
@@ -138,10 +140,12 @@ def lvdisprbm(temp,inp,th):
 	
 def main(argv):
 	
-	if len(argv) < 3:
+	
+	if len(argv) < 6:
 	      print "Insuffucient Arguments"
 	      print "-w/-f input single word/file -t/-d template list/file -p n/d/b"
 	      sys.exit()
+	stime=time.clock()
 	if argv[1]=='-w':
 		wlist=[]
 		wlist[len(wlist):]=[argv[2]]
@@ -150,7 +154,7 @@ def main(argv):
 		wlist=[]
 		for line in fl.readlines():
 			line.rstrip()
-			line=re.sub('[!@#\"\'?,.;:]','',line)
+			line=re.sub('[!@#\"?,.;:]','',line)
 			for word in line.split():
 				if not word=="":
 					wlist.append(word.lower())
@@ -203,11 +207,11 @@ def main(argv):
 		show=1
 	else:
 		show=0
-	for i,inp in enumerate(wlist):
+	for inp in wlist:
 		mindis=[]
 		#inp=inp.lower()
 		print inp
-		for j,temp in enumerate(tlist):
+		for temp in tlist:
 			#temp=temp.lower()
 			#print temp
 			if prune=='n':
@@ -220,6 +224,7 @@ def main(argv):
 					print back[0:-1,1::]
 			elif prune=='d':
 				#print "Calculating Pruning Min Dist."
+				#print th
 				lvdst,back,dist=lvdisprdis(temp,inp,th)
 				if show==1:
 					print '-------------DIST MATRIX FOR {0} ---------'.format(temp)
@@ -239,13 +244,15 @@ def main(argv):
 				print "-w/-f input single word/file -t/-d template list/file -p n/d/b th"
 				sys.exit()
 			mindis[len(mindis):]=[dist]
+			if dist==0:
+				break;
 			
 		#print mindis
 		cldis[len(cldis):]=[min(mindis)]
 		#print  min(mindis)
-		clid=mindis.index(min(mindis))
+		#clid=mindis.index(min(mindis))
 		#print clid
-		cltemp[len(cltemp):]=[tlist[clid]]
+		cltemp[len(cltemp):]=[tlist[mindis.index(min(mindis))]]
 		#print tlist[clid]
 	#print cltemp
 	#print wlist[0]
@@ -257,6 +264,9 @@ def main(argv):
 		print '{0} ---> {1} ---> {2}'.format(inp,cltemp[i],cldis[i])
 		if (i%20)==0:
 			fl.write('\n')
+	print time.clock()-stime
+	print len(wlist)
+	#fl.close()
 #print temp
         #print inp
 	#lvdst,back,dist=lvdisprdis(temp,inp,3)
