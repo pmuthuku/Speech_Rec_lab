@@ -165,7 +165,7 @@ for j in xrange(len(template_chars)):
         best_cost = DTW_matrix[j][len(inp_chars)-1].lowest_cost
         best_ptr = (j, len(inp_chars)-1)
 
-DTW_matrix[j][len(inp_chars)-1].symb = '+'
+DTW_matrix[best_ptr[0]][best_ptr[1]].symb = '+'
 
 
 right_word = []

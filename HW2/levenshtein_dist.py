@@ -137,6 +137,32 @@ for i in xrange(len(inp_chars)):
         pruning_threshold = best_cost_sofar + beam_thresh
         
 
+best_cost = 99999
+best_ptr = None
+for j in xrange(len(template_chars)):
+    if DTW_matrix[j][len(inp_chars)-1].lowest_cost < best_cost:
+        best_cost = DTW_matrix[j][len(inp_chars)-1].lowest_cost
+        best_ptr = (j, len(inp_chars)-1)
+
+DTW_matrix[j][len(inp_chars)-1].symb = '+'
+
+
+right_word = []
+# Let's unwrap and print out the closest word                                     
+while (template_chars[best_ptr[0]] != '*' and
+       inp_chars[best_ptr[1]]!= '*'):
+
+    #This is an insertion error                                                   
+    if DTW_matrix[best_ptr[0]][best_ptr[1]].symb != '-':
+        right_word.insert(0,template_chars[best_ptr[0]])
+
+    DTW_matrix[best_ptr[0]][best_ptr[1]].symb = '+'
+    best_ptr = DTW_matrix[best_ptr[0]][best_ptr[1]].back_ptr
+
+
+
+
+
 # Print out the DTW matrix
 print 'DTW Matrix'
 for j in reversed(xrange(len(template_chars))):
@@ -146,6 +172,8 @@ for j in reversed(xrange(len(template_chars))):
         
         if DTW_matrix[j][i].is_on == False:
             print colored('x','red'),'\t',
+        elif DTW_matrix[j][i].symb == '+':
+            print colored(DTW_matrix[j][i].lowest_cost,'green'),'\t',
         else:
             print DTW_matrix[j][i].lowest_cost,'\t',
 
@@ -182,6 +210,8 @@ for j in reversed(xrange(len(template_chars))):
 
         if DTW_matrix[j][i].is_on == False:
             print colored(DTW_matrix[j][i].symb,'red'),' ',
+        elif DTW_matrix[j][i].symb == '+':
+            print colored(DTW_matrix[j][i].symb,'green'),' ',
         else:
             print DTW_matrix[j][i].symb,' ',
 
