@@ -1,0 +1,318 @@
+#!/usr/bin/python
+
+import sys
+import os
+import numpy
+import re
+import time
+
+def lvdis(temp,inp):
+	m=len(temp)
+	n=len(inp)
+	#print m
+	lvdst=numpy.zeros((m+1,n+1))
+	#print lvdst
+	back=numpy.ones((m+1,n+1))
+	back=-1*back
+	
+	dummyc=numpy.arange(n+1)
+	dummyr=numpy.arange(m,-1,-1)
+	lvdst[:,0]=dummyr
+	lvdst[m,:]=dummyc
+				
+	for i,sin in enumerate(inp):
+		for j,ste in enumerate(temp):
+			ccost=[0,0,0]
+			if sin==ste:
+				cost=0
+			else:
+				cost=1
+			#ccost[len(ccost):]=[1+lvdst[m-1-j,i]]
+			#ccost[len(ccost):]=[1+lvdst[m-1-(j-1),i+1]]
+			#ccost[len(ccost):]=[cost+lvdst[m-1-(j-1),i]]
+			ccost[0]=1+lvdst[m-1-j,i]
+			ccost[1]=1+lvdst[m-1-(j-1),i+1]
+			ccost[2]=cost+lvdst[m-1-(j-1),i]
+			
+			mcost=min(ccost)
+			lvdst[m-1-j,i+1]=mcost
+			#id=ccost.index(mcost)
+			back[m-1-j,i+1]=ccost.index(mcost)
+			
+	#print lvdst[0,n]
+	return(lvdst,back,lvdst[0,n])
+
+def lvdisprdis(temp,inp,th):
+	m=len(temp)
+	n=len(inp)
+	th=int(th)
+	lvdst=numpy.zeros((m+1,n+1))
+	#lvdst=-1*lvdst
+	back=numpy.ones((m+1,n+1))
+	back=-1*back
+	#back[:,0]=numpy.zeros(m+1)
+	#back[m,:]=numpy.zeros(n+1)
+	dummyc=numpy.arange(n+1)
+	dummyr=numpy.arange(m,-1,-1)
+	lvdst[:,0]=dummyr
+	lvdst[m,:]=dummyc
+				
+	for i,sin in enumerate(inp):
+		for j,ste in enumerate(temp):
+
+			if lvdst[m-1-j,i] < th  or lvdst[m-1-(j-1),i+1] < th  or lvdst[m-1-(j-1),i] <= th:
+ 
+				#ccost=[]
+				ccost=[0,0,0]
+				if sin==ste:
+					cost=0
+				else:
+					cost=1
+				#ccost[len(ccost):]=[1+lvdst[m-1-j,i]]
+				#ccost[len(ccost):]=[1+lvdst[m-1-(j-1),i+1]]
+				#ccost[len(ccost):]=[cost+lvdst[m-1-(j-1),i]]
+				ccost[0]=1+lvdst[m-1-j,i]
+				ccost[1]=1+lvdst[m-1-(j-1),i+1]
+				ccost[2]=cost+lvdst[m-1-(j-1),i]
+			
+				mcost=min(ccost)
+				if mcost <= th:
+					lvdst[m-1-j,i+1]=mcost
+					back[m-1-j,i+1]=ccost.index(mcost)
+				else:
+					lvdst[m-1-j,i+1]=99
+				#lvdst[m-1-j,i+1]=mcost
+				#id=ccost.index(mccost)
+				#back[m-1-j,i+1]=id
+			else:
+				lvdst[m-1-j,i+1]=99
+			
+	#print lvdst[0,n]
+	return(lvdst,back,lvdst[0,n])
+
+def lvdisprbm(temp,inp,th):
+	m=len(temp)
+	n=len(inp)
+	th=int(th)
+	lvdst=numpy.zeros((m+1,n+1))
+	#lvdst=-1*lvdst
+	back=numpy.ones((m+1,n+1))
+	back=-1*back
+	#back[:,0]=numpy.zeros(m+1)
+	#back[m,:]=numpy.zeros(n+1)
+	dummyc=numpy.arange(n+1)
+	dummyr=numpy.arange(m,-1,-1)
+	lvdst[:,0]=dummyr
+	lvdst[m,:]=dummyc
+	inith=99
+				
+	for i,sin in enumerate(inp):
+		for j,ste in enumerate(temp):
+
+			if lvdst[m-1-j,i] !=99 or lvdst[m-1-(j-1),i+1] !=99  or lvdst[m-1-(j-1),i] != 99:
+				ccost=[0,0,0]
+				if sin==ste:
+					cost=0
+				else:
+					cost=1
+				#ccost[len(ccost):]=[1+lvdst[m-1-j,i]]
+				#ccost[len(ccost):]=[1+lvdst[m-1-(j-1),i+1]]
+				#ccost[len(ccost):]=[cost+lvdst[m-1-(j-1),i]]
+				ccost[0]=1+lvdst[m-1-j,i]
+				ccost[1]=1+lvdst[m-1-(j-1),i+1]
+				ccost[2]=cost+lvdst[m-1-(j-1),i]
+			
+				mcost=min(ccost)
+				lvdst[m-1-j,i+1]=mcost
+				id=ccost.index(mcost)
+				back[m-1-j,i+1]=id
+			else:
+				lvdst[m-1-j,i+1]=99
+					
+		x=lvdst[:,i+1]
+		p=numpy.nonzero(x > inith)
+		x[p]=99
+		lvdst[:,i+1]=x
+		inith=min(x)+th
+	#print lvdst[0,n]
+	return(lvdst,back,lvdst[0,n])
+			
+			
+	
+def main(argv):
+	
+	
+	if len(argv) < 6:
+	      print "Insuffucient Arguments"
+	      print "-w/-f input single word/file -t/-d template list/file -p n/d/b"
+	      sys.exit()
+	
+	if argv[1]=='-w':
+		wlist=[]
+		wlist[len(wlist):]=[argv[2]]
+	elif argv[1]=='-f':
+		fl=open(argv[2],'r')
+		wlist=[]
+		for line in fl.readlines():
+			line.rstrip()
+			line=re.sub('[!@#\"?,.;:]','',line)
+			for word in line.split():
+				if not word=="":
+					wlist.append(word.lower())
+		fl.close()
+	else:
+		print "Input Word"
+		print "-w/-f inputsingleword/file -t/-d templatelist/file -p n/d/b th "
+		sys.exit()
+
+	if '-p' in argv:
+		pid=argv.index('-p')
+		prune=argv[pid+1]
+		if prune=='d' or prune=='b':
+			if len(argv)-1 < pid+2:
+				print "Need threshold size"
+				print "-w/-f inputsingleword/file -t/-d templatelist/file -p n/d/b th"
+				sys.exit()
+			else:
+				th=argv[pid+2]
+		elif prune=='n':
+			th=0;
+		else:
+			print "wrong pruning method"
+			print "-w/-f inputsingleword/file -t/-d templatelist/file -p n/d/b th"
+			sys.exit()
+	else:
+		print "Pruning arguments"
+		print "-w/-f inputsingleword/file -t/-d templatelist/file -p n/d/b th"
+		sys.exit()
+
+	if argv[3]=='-t':
+		tlist=argv[4:pid]
+	elif argv[3]=='-d':
+		fl=open(argv[4],'r')
+		tlist=[]
+		for line in fl.readlines():
+			for word in line.split():
+				tlist.append(word)
+		fl.close()
+	else:
+		print "Unreasonable Templates"
+		print "-w/-f input single word/file -t/-d template list/file -p n/d/b th"
+		sys.exit()
+
+	#mindis=[]
+	
+	#print tlist
+	if argv[1]=='-w' and argv[3]=='-t':
+		show=1
+	else:
+		show=0
+	cltemp=[]
+	cldis=[]
+	stime=time.clock()
+	if prune=='n':
+		for inp in wlist:
+			mindis=[]
+			#print inp
+			for temp in tlist:
+			
+				lvdst,back,dist=lvdis(temp,inp)
+				mindis[len(mindis):]=[dist]
+				
+				if show==1:
+					print "UNPRUNED"
+					print '-------------DIST MATRIX FOR TEMPLATE {0} ---------'.format(temp)
+					print lvdst[0:-1,1::]
+					print '-------------BACK MATRIX FOR TEMPLATE {0}---------'.format(temp)
+					print back[0:-1,1::]
+				
+				if dist==0 and show==0:
+					break;
+			
+		        #print mindis
+			cldis[len(cldis):]=[min(mindis)]
+			closte=tlist[mindis.index(min(mindis))]
+			cltemp[len(cltemp):]=[closte]
+			print '{0} ---> {1} ---> {2}'.format(inp,closte,min(mindis))
+
+	elif prune=='d':
+		#show=1
+		for inp in wlist:
+			mindis=[]
+		#print inp
+			for temp in tlist:
+			
+				lvdst,back,dist=lvdisprdis(temp,inp,th)
+				mindis[len(mindis):]=[dist]
+				if show==1:
+					print "WIDTH"
+					print '-------------DIST MATRIX FOR TEMPLATE {0} ---------'.format(temp)
+					print lvdst[0:-1,1::]
+					print '-------------BACK MATRIX FOR TEMPLATE {0}---------'.format(temp)
+					print back[0:-1,1::]
+					#print '{0} ---> {1} ---> {2}'.format(inp,temp,dist)
+				
+				if dist==0 and show==0:
+					break;
+			
+			#print mindis
+			cldis[len(cldis):]=[min(mindis)]
+			cltemp[len(cltemp):]=[tlist[mindis.index(min(mindis))]]
+			print '{0} ---> {1} ---> {2}'.format(inp,tlist[mindis.index(min(mindis))],min(mindis))
+
+	elif prune=='b':
+		for inp in wlist:
+			mindis=[]
+		#print inp
+			for temp in tlist:
+			
+				lvdst,back,dist=lvdisprbm(temp,inp,th)
+				mindis[len(mindis):]=[dist]
+				if show==1:
+					print "BEAM"
+					print '-------------DIST MATRIX FOR TEMPLATE {0} ---------'.format(temp)
+					print lvdst[0:-1,1::]
+					print '-------------BACK MATRIX FOR TEMPLATE {0}---------'.format(temp)
+					print back[0:-1,1::]
+				
+				
+				if dist==0 and show==0:
+					break;
+			
+		        #print mindis
+			cldis[len(cldis):]=[min(mindis)]
+			cltemp[len(cltemp):]=[tlist[mindis.index(min(mindis))]]
+			print '{0} ---> {1} ---> {2}'.format(inp,tlist[mindis.index(min(mindis))],min(mindis))
+
+	else:
+		print "-w/-f input single word/file -t/-d template list/file -p n/d/b th"
+		sys.exit()
+	
+	print 'Time--{0}'.format(time.clock()-stime)
+	print 'Words--{0}'.format(len(wlist))
+	fl=open('Checked.txt','w')
+	for i,inp in enumerate(wlist):
+		fl.write(cltemp[i]+' ')
+		if ((i+1)%40)==0:
+			fl.write('\n')
+	#fl.close()
+#print temp
+        #print inp
+	#lvdst,back,dist=lvdisprdis(temp,inp,3)
+	#lvdstu,backu,distu=lvdis(temp,inp)
+	#print "xxxxxxxxxxxxxxxxxxxxx PRINTING DISTANCE MATRIX xxxxxxxxxxxxxxxxxxxxxx"
+	#print lvdst 
+	#print lvdst#[0:-1,1::]
+
+	#print "xxxxxxxxxxxxxxxxxxxxx PRINTING back MATRIX xxxxxxxxxxxxxxxxxxxxxx"
+	#print back[0:-1,1::]
+	
+	#print "xxxxxxxxxxxxxxxxxxxxx PRINTING back MATRIX xxxxxxxxxxxxxxxxxxxxxx"
+	#print lvdstu
+	#print "xxxxxxxxxxxxxxxxxxxxx PRINTING MINIMUM DISTANCE xxxxxxxxxxxxxxxxxxxxxx"
+	#print backu
+
+
+
+if __name__ == '__main__':
+	main(sys.argv)
