@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Do spell check on story
-python HW2_1.py -f story.txt -d dict.txt -p n
+python HW2_f.py -f story.txt -d dict.txt -p n
 
 # Create output in right format
 perl format_story.pl Checked.txt > ourstory.txt

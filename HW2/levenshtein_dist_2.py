@@ -113,12 +113,13 @@ for i in xrange(len(inp_chars)):
                          + get_comp_cost(inp_chars[i], template_chars[j])]
                 # End of template word so turning it off
                 if template_chars[j] == '*':
-                    costs = [99999, 99999, 99999]
+                    costs = [99999, i, 99999]
 
         
             
         DTW_matrix[j][i].lowest_cost =  np.min(costs)
         min_ptr = np.argmin(costs)
+
 
         if prune_thresh == True:
 
