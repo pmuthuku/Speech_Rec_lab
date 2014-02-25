@@ -26,7 +26,6 @@ do
     done
 
     inp=n
-    mv output.wav $DIR_NAME/$i.wav
+    ch_wave output.wav -scaleN 0.65 -c 0 -F 16000 -o $DIR_NAME/$i.wav
 
 done
-

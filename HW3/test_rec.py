@@ -26,8 +26,8 @@ frames = []
 
 num_sil_frames = 0
 
-# The device will record for 20 seconds until there has been 1
-# second of audio (36 frames) where the energy is less than the
+# The device will record for 20 seconds until there has been 0.5
+# second of audio (18 frames) where the energy is less than the
 # threshold
 for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     data = stream.read(CHUNK)
@@ -42,7 +42,7 @@ for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     else:
         num_sil_frames = 0
 
-    if num_sil_frames >= 37:
+    if num_sil_frames >= 19:
         break
 
 print("* done recording")
