@@ -42,7 +42,7 @@ for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     else:
         num_sil_frames = 0
 
-    if num_sil_frames >= 19:
+    if num_sil_frames >= 37:
         break
 
 print("* done recording")
