@@ -4,9 +4,10 @@ import numpy
 import scipy.fftpack
 import struct
 import math
+import os
 
 if len(sys.argv) < 2:
-    print("Extracts MFCCs from a wave file.\nUsage: %s filename.wav\n" % sys.argv[0])
+    print("Extracts MFCCs from a wav files in a directory.\nUsage: %s dir" % sys.argv[0])
     sys.exit(-1)
 
 
@@ -69,45 +70,50 @@ def gen_mel_filts(num_filts, framelength, samp_freq):
     return filts
 
 
+dir_name = sys.argv[1]
+file_list=os.listdir(dir_name)
 
+for i in xrange(len(file_list)):
 
-wf = wave.open(sys.argv[1], 'rb')
+    filnm=dir_name + '/' + file_list[i]
 
-samp_rate = wf.getframerate()
+    wf = wave.open(filnm, 'rb')
 
-if wf.getnchannels() != 1:
-    print "Oops. This code does not work with multichannel recordings. Please provide a mono file\n"
-    sys.exit(-1)
+    samp_rate = wf.getframerate()
 
-frames = wf.readframes(wf.getnframes())
-data = numpy.array(struct.unpack_from("%dh" % wf.getnframes(), frames))
-wf.close()
+    if wf.getnchannels() != 1:
+        print "Oops. This code does not work with multichannel recordings. Please provide a mono file\n"
+        sys.exit(-1)
 
-
-
-# NOTE: These frames are not the same 'frames' as the ones in the wav file 
-frame_size = 0.025 #in seconds
-frame_shift = 0.0125 #in seconds
-frame_length = int(samp_rate * frame_size)
-frame_shift_length = int(samp_rate * frame_shift)
-speech_frames = get_frames(data, frame_length, frame_shift_length)
+    frames = wf.readframes(wf.getnframes())
+    data = numpy.array(struct.unpack_from("%dh" % wf.getnframes(), frames))
+    wf.close()
 
 
 
-#Let's compute the spectrum
-comp_spec = numpy.fft.rfft(speech_frames,n=1024)
-mag_spec = abs(comp_spec)
-#numpy.savetxt('mag_spec.data',mag_spec)
+    # NOTE: These frames are not the same 'frames' as the ones in the wav file 
+    frame_size = 0.025 #in seconds
+    frame_shift = 0.0125 #in seconds
+    frame_length = int(samp_rate * frame_size)
+    frame_shift_length = int(samp_rate * frame_shift)
+    speech_frames = get_frames(data, frame_length, frame_shift_length)
 
-# Mel warping
-filts = gen_mel_filts(40, 513, samp_rate) # 1024 point FFT
-mel_spec = numpy.dot(mag_spec,filts)
+
+
+    #Let's compute the spectrum
+    comp_spec = numpy.fft.rfft(speech_frames,n=1024)
+    mag_spec = abs(comp_spec)
+    #numpy.savetxt('mag_spec.data',mag_spec)
+
+    # Mel warping
+    filts = gen_mel_filts(40, 513, samp_rate) # 1024 point FFT
+    mel_spec = numpy.dot(mag_spec,filts)
 #numpy.savetxt('mel_spec.data', mel_spec)
 
-# Mel log spectrum
-mel_log_spec = mel_spec #trust me on this
-nonzero = mel_log_spec > 0
-mel_log_spec[nonzero] = numpy.log(mel_log_spec[nonzero])
+    # Mel log spectrum
+    mel_log_spec = mel_spec #trust me on this
+    nonzero = mel_log_spec > 0
+    mel_log_spec[nonzero] = numpy.log(mel_log_spec[nonzero])
 #numpy.savetxt('mel_log_spec.data', mel_log_spec)
 
 # Mel cepstrum
@@ -117,28 +123,27 @@ mel_log_spec[nonzero] = numpy.log(mel_log_spec[nonzero])
 # numpy.savetxt('recomp_cep.data', mel_cep)
 # mel_cep = mel_cep[:,0:13]
 
-# Mel Cepstrum
-mel_cep = scipy.fftpack.dct(mel_log_spec)
-#numpy.savetxt('mel_cep.data', mel_cep)
+    # Mel Cepstrum
+    mel_cep = scipy.fftpack.dct(mel_log_spec)
+    #numpy.savetxt('mel_cep.data', mel_cep)
 
-#mel_recons_spec = scipy.fftpack.idct(mel_cep)
-#numpy.savetxt('recomp.data', mel_recons_spec)
+   #mel_recons_spec = scipy.fftpack.idct(mel_cep)
+   #numpy.savetxt('recomp.data', mel_recons_spec)
 
-mel_cep = mel_cep[:,0:13]
+    mel_cep = mel_cep[:,0:13]
+    
+    #Mel Cep deltas
+    mel_cep_shift = numpy.delete(mel_cep,[0,1],axis=0)
+    blanks = numpy.zeros((2,mel_cep_shift.shape[1]))
+    mel_cep_shift = numpy.append(mel_cep_shift, blanks, axis=0)
+    mel_cep_deltas = mel_cep_shift - mel_cep
+    all_feats = numpy.append(mel_cep,mel_cep_deltas, axis=1)
 
-#Mel Cep deltas
-mel_cep_shift = numpy.delete(mel_cep,[0,1],axis=0)
-blanks = numpy.zeros((2,mel_cep_shift.shape[1]))
-mel_cep_shift = numpy.append(mel_cep_shift, blanks, axis=0)
-mel_cep_deltas = mel_cep_shift - mel_cep
-all_feats = numpy.append(mel_cep,mel_cep_deltas, axis=1)
+    #Mel Cep Delta-deltas
+    mel_cep_shift = numpy.delete(mel_cep_deltas,[0,1],axis=0)
+    mel_cep_shift = numpy.append(mel_cep_shift, blanks, axis=0)
+    mel_cep_delta_deltas = mel_cep_shift - mel_cep_deltas
+    all_feats = numpy.append(all_feats, mel_cep_delta_deltas, axis=1)
 
-#Mel Cep Delta-deltas
-mel_cep_shift = numpy.delete(mel_cep_deltas,[0,1],axis=0)
-mel_cep_shift = numpy.append(mel_cep_shift, blanks, axis=0)
-mel_cep_delta_deltas = mel_cep_shift - mel_cep_deltas
-all_feats = numpy.append(all_feats, mel_cep_delta_deltas, axis=1)
-
-
-
-numpy.savetxt('mel_cep.data', all_feats)
+    outfile = dir_name + '/' + os.path.splitext(file_list[i])[0] + '.mfcc'
+    numpy.savetxt(outfile, all_feats)
