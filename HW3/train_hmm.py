@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import scipy.spatial.distance
 
-def do_DTW(HMM, data):
+def do_DTW(HMM, trans_mat, data):
     means = HMM[::2,:]
     vars = HMM[1::2,:]
 
@@ -31,8 +31,11 @@ def do_DTW(HMM, data):
     k=3
     for j in range(2,n+1):
        for i in range(2,min(2+k,m+2)):
-           dcost[i,j] = min(dcost[i,j-1],dcost[i-1,j-1],dcost[i-2,j-1])+DTW_dist[i-2,j-1]
-           tmp_ptr = np.argmin([dcost[i,j-1],dcost[i-1,j-1],dcost[i-2,j-1]])
+           costs = np.array([dcost[i,j-1]+trans_mat[i][0],
+                            dcost[i-1,j-1]+trans_mat[i-1][1],
+                            dcost[i-2,j-1]+trans_mat[i-2][2]])
+           dcost[i,j] = np.min(costs) +DTW_dist[i-2,j-1]
+           tmp_ptr = np.argmin(costs)
 
            if tmp_ptr == 0:
                DTW_bptr[i,j] = i
@@ -49,18 +52,36 @@ def do_DTW(HMM, data):
     prev=6.0
     current=6.0
     j = n
-    k = 3
-    while current > 2.0:
+    btrace = np.zeros((n+1,))
+    trans_count = np.zeros((5,5))
+
+    btrace[0] = 2
+    btrace[1] = 2
+    while j >= 2:
+        btrace[j] = prev
         current = DTW_bptr[prev][j]
         j = j - 1
-        
-        if current != prev: #State has changed
-            seg[k] = j
-            k = k-1
-             
+        trans_count[current-2,prev-2] = trans_count[current-2,prev-2] + 1
         prev = current
-    
-    pass
+        
+    btrace = btrace -2
+
+    binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
+
+
+    prev=0
+    for j in xrange(4): #Last cut does not matter
+            seg[j] = binct[j] + prev
+            prev = seg[j]
+
+    tr_count = np.concatenate((np.matrix(trans_count[0,:3]),
+                               np.matrix(trans_count[1,1:4]),
+                               np.matrix(trans_count[2,2:5]),
+                               np.matrix(np.append(trans_count[3,3:],0)),
+                               np.matrix(np.append(np.append(trans_count[4,4],0),0))),
+                              axis=0)
+
+    return seg, tr_count
 
 
 
@@ -88,6 +109,17 @@ def train_hmm(digit):
     # because 5 states and one row for mean and one row for variance
     HMM = np.zeros((10,data0.shape[1]))
 
+    # Transition probabilities
+    trans_mat = np.array([[0.000001, 0.0000001, 1.0],
+                          [0.000001, 0.5, 0.5],
+                          [0.7, 0.15, 0.15],
+                          [0.7, 0.15, 0.15],
+                          [0.7, 0.15, 0.15],
+                          [0.5, 0.2, 0],
+                          [0.3, 0, 0]])
+
+    # Convert to distance
+    trans_mat = - np.log(trans_mat) # Will give warnings
     
          
     # Extract appropriate sections for each state
@@ -145,11 +177,7 @@ def train_hmm(digit):
     HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
     # Do DTW between HMM and data sequence
-    do_DTW(HMM,data0)
-#     do_DTW(HMM,data1)
-#     do_DTW(HMM,data2)
-#     do_DTW(HMM,data3)
-#     do_DTW(HMM,data4)
+    do_DTW(HMM,trans_mat,data0)
 
 
 if __name__ == '__main__':
