@@ -38,9 +38,27 @@ def do_DTW(HMM, data):
                DTW_bptr[i,j] = i-2
        k=k+2
 
+    #np.savetxt('bptr_file',DTW_bptr)
 
+    seg = np.zeros((4,1)) # 4 cuts
+
+    prev=6.0
+    current=6.0
+    j = n
+    k = 3
+    while current > 2.0:
+        current = DTW_bptr[prev][j]
+        j = j - 1
+        
+        if current != prev: #State has changed
+            seg[k] = j
+            k = k-1
+             
+        prev = current
     
-    
+    pass
+
+
 
 if len(sys.argv) <= 1:
     print "Usage:\npython train_hmm.py digit"
@@ -123,7 +141,11 @@ def train_hmm(digit):
     HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
     # Do DTW between HMM and data sequence
+    do_DTW(HMM,data0)
     do_DTW(HMM,data1)
+    do_DTW(HMM,data2)
+    do_DTW(HMM,data3)
+    do_DTW(HMM,data4)
 
 
 if __name__ == '__main__':
