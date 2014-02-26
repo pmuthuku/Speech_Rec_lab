@@ -6,13 +6,15 @@ def do_DTW(HMM, trans_mat, data):
     means = HMM[::2,:]
     vars = HMM[1::2,:]
 
+    #vars = vars+ 0.001
+
     DTW_dist = np.zeros((5,data.shape[0]))
     
     for i in xrange(5):
         inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
-                                                'euclidean')
-         #                                        'mahalanobis',VI=inv_cov)
+                                      #          'euclidean')
+                                                'mahalanobis',VI=inv_cov)
         DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
 
     np.savetxt('dist_file',DTW_dist)
@@ -81,6 +83,11 @@ def do_DTW(HMM, trans_mat, data):
                                np.matrix(np.append(trans_count[3,3:],0)),
                                np.matrix(np.append(np.append(trans_count[4,4],0),0))),
                               axis=0)
+
+    tr_count = tr_count + 0.0001 #Avoiding infinity errors
+    tr_count = tr_count/np.sum(tr_count)
+    tr_count = np.log(tr_count)
+
 
     best_cost = dcost[dcost.shape[0]-1, 
                       dcost.shape[1]-1]
@@ -180,6 +187,9 @@ def train_hmm(digit):
     HMM[8][:] = np.mean(state1,axis=0)
     HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
+    best_overall_cost = np.inf
+    best_overall_segs = None
+    best_overall_trans = None
 
     for i in xrange(10):
 
@@ -217,44 +227,44 @@ def train_hmm(digit):
 
 
 
-        state1 = np.concatenate((data0[segs[0][0]:segs[0][1]+1,:],
-                                 data1[segs[1][0]:segs[1][1]+1,:],
-                                 data2[segs[2][0]:segs[2][1]+1,:],
-                                 data3[segs[3][0]:segs[3][1]+1,:],
-                                 data4[segs[4][0]:segs[4][1]+1,:]),axis=0)
+        state1 = np.concatenate((data0[segs[0][0]-1:segs[0][1]+1,:],
+                                 data1[segs[1][0]-1:segs[1][1]+1,:],
+                                 data2[segs[2][0]-1:segs[2][1]+1,:],
+                                 data3[segs[3][0]-1:segs[3][1]+1,:],
+                                 data4[segs[4][0]-1:segs[4][1]+1,:]),axis=0)
 
         HMM[2][:] = np.mean(state1,axis=0)
         HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
     
 
 
-        state1 = np.concatenate((data0[segs[0][1]:segs[0][2]+1,:],
-                                 data1[segs[1][1]:segs[1][2]+1,:],
-                                 data2[segs[2][1]:segs[2][2]+1,:],
-                                 data3[segs[3][1]:segs[3][2]+1,:],
-                                 data4[segs[4][1]:segs[4][2]+1,:]),axis=0)
+        state1 = np.concatenate((data0[segs[0][1]-1:segs[0][2]+1,:],
+                                 data1[segs[1][1]-1:segs[1][2]+1,:],
+                                 data2[segs[2][1]-1:segs[2][2]+1,:],
+                                 data3[segs[3][1]-1:segs[3][2]+1,:],
+                                 data4[segs[4][1]-1:segs[4][2]+1,:]),axis=0)
 
         HMM[4][:] = np.mean(state1,axis=0)
         HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
 
-        state1 = np.concatenate((data0[segs[0][2]-1:segs[0][3],:],
-                                 data1[segs[1][2]-1:segs[1][3],:],
-                                 data2[segs[2][2]-1:segs[2][3],:],
-                                 data3[segs[3][2]-1:segs[3][3],:],
-                                 data4[segs[4][2]-1:segs[4][3],:]),axis=0)
+        state1 = np.concatenate((data0[segs[0][2]-1:segs[0][3]+1,:],
+                                 data1[segs[1][2]-1:segs[1][3]+1,:],
+                                 data2[segs[2][2]-1:segs[2][3]+1,:],
+                                 data3[segs[3][2]-1:segs[3][3]+1,:],
+                                 data4[segs[4][2]-1:segs[4][3]+1,:]),axis=0)
 
         HMM[6][:] = np.mean(state1,axis=0)
         HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
     
 
 
-        state1 = np.concatenate((data0[segs[0][3]:,:],
-                                 data1[segs[1][3]:,:],
-                                 data2[segs[2][3]:,:],
-                                 data3[segs[3][3]:,:],
-                                 data4[segs[4][3]:,:]),axis=0)
+        state1 = np.concatenate((data0[segs[0][3]-1:,:],
+                                 data1[segs[1][3]-1:,:],
+                                 data2[segs[2][3]-1:,:],
+                                 data3[segs[3][3]-1:,:],
+                                 data4[segs[4][3]-1:,:]),axis=0)
 
         HMM[8][:] = np.mean(state1,axis=0)
         HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
