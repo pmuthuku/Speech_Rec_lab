@@ -11,7 +11,8 @@ def do_DTW(HMM, trans_mat, data):
     for i in xrange(5):
         inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
-                                                      'mahalanobis',VI=inv_cov)
+                                                'euclidean')
+        #                                              'mahalanobis',VI=inv_cov)
         DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
 
     np.savetxt('dist_file',DTW_dist)
@@ -176,9 +177,83 @@ def train_hmm(digit):
     HMM[8][:] = np.mean(state1,axis=0)
     HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
-    # Do DTW between HMM and data sequence
-    do_DTW(HMM,trans_mat,data0)
 
+    for i in xrange(10):
+
+        # Do DTW between HMM and data sequence
+        new_segs0, new_tr0 = do_DTW(HMM,trans_mat,data0)
+        new_segs1, new_tr1 = do_DTW(HMM,trans_mat,data1)
+        new_segs2, new_tr2 = do_DTW(HMM,trans_mat,data2)
+        new_segs3, new_tr3 = do_DTW(HMM,trans_mat,data3)
+        new_segs4, new_tr4 = do_DTW(HMM,trans_mat,data4)
+
+        # Update rules
+    
+        segs = np.concatenate((new_segs0.transpose(),
+                               new_segs1.transpose(),
+                               new_segs2.transpose(),
+                               new_segs3.transpose(),
+                               new_segs4.transpose()), axis=0)
+
+        trans_mat[2:,:] = trans_mat[2:,:] + 0.025* (new_tr0 + new_tr1 + new_tr2
+                                                    + new_tr3 + new_tr4)
+        
+        # Extract appropriate sections for each state
+        state1 = np.concatenate((data0[:segs[0][0]+1,:],
+                                 data1[:segs[1][0]+1,:],
+                                 data2[:segs[2][0]+1,:],
+                                 data3[:segs[3][0]+1,:],
+                                 data4[:segs[4][0]+1,:]),axis=0)
+
+        HMM[0][:] = np.mean(state1,axis=0)
+        HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[0][0]:segs[0][1]+1,:],
+                                 data1[segs[1][0]:segs[1][1]+1,:],
+                                 data2[segs[2][0]:segs[2][1]+1,:],
+                                 data3[segs[3][0]:segs[3][1]+1,:],
+                                 data4[segs[4][0]:segs[4][1]+1,:]),axis=0)
+
+        HMM[2][:] = np.mean(state1,axis=0)
+        HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
+    
+
+
+        state1 = np.concatenate((data0[segs[0][1]:segs[0][2]+1,:],
+                                 data1[segs[1][1]:segs[1][2]+1,:],
+                                 data2[segs[2][1]:segs[2][2]+1,:],
+                                 data3[segs[3][1]:segs[3][2]+1,:],
+                                 data4[segs[4][1]:segs[4][2]+1,:]),axis=0)
+
+        HMM[4][:] = np.mean(state1,axis=0)
+        HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[0][2]-1:segs[0][3],:],
+                                 data1[segs[1][2]-1:segs[1][3],:],
+                                 data2[segs[2][2]-1:segs[2][3],:],
+                                 data3[segs[3][2]-1:segs[3][3],:],
+                                 data4[segs[4][2]-1:segs[4][3],:]),axis=0)
+
+        HMM[6][:] = np.mean(state1,axis=0)
+        HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
+    
+
+
+        state1 = np.concatenate((data0[segs[0][3]:,:],
+                                 data1[segs[1][3]:,:],
+                                 data2[segs[2][3]:,:],
+                                 data3[segs[3][3]:,:],
+                                 data4[segs[4][3]:,:]),axis=0)
+
+        HMM[8][:] = np.mean(state1,axis=0)
+        HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
+
+
+    pass
 
 if __name__ == '__main__':
     train_hmm(sys.argv[1])
