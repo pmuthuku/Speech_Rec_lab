@@ -269,6 +269,11 @@ def train_hmm(digit):
         HMM[8][:] = np.mean(state1,axis=0)
         HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
+        
+    filnm = digit+'.hmm'
+    np.savetxt(filnm,HMM)
+    filnm = digit+'.trans'
+    np.savetxt(filnm,trans_mat)
 
     pass
 
