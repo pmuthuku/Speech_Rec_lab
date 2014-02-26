@@ -12,7 +12,7 @@ def do_DTW(HMM, trans_mat, data):
         inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
                                                 'euclidean')
-        #                                              'mahalanobis',VI=inv_cov)
+         #                                        'mahalanobis',VI=inv_cov)
         DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
 
     np.savetxt('dist_file',DTW_dist)
@@ -82,7 +82,10 @@ def do_DTW(HMM, trans_mat, data):
                                np.matrix(np.append(np.append(trans_count[4,4],0),0))),
                               axis=0)
 
-    return seg, tr_count
+    best_cost = dcost[dcost.shape[0]-1, 
+                      dcost.shape[1]-1]
+
+    return seg, tr_count, best_cost
 
 
 
@@ -181,12 +184,16 @@ def train_hmm(digit):
     for i in xrange(10):
 
         # Do DTW between HMM and data sequence
-        new_segs0, new_tr0 = do_DTW(HMM,trans_mat,data0)
-        new_segs1, new_tr1 = do_DTW(HMM,trans_mat,data1)
-        new_segs2, new_tr2 = do_DTW(HMM,trans_mat,data2)
-        new_segs3, new_tr3 = do_DTW(HMM,trans_mat,data3)
-        new_segs4, new_tr4 = do_DTW(HMM,trans_mat,data4)
+        new_segs0, new_tr0, best_cost0 = do_DTW(HMM,trans_mat,data0)
+        new_segs1, new_tr1, best_cost1 = do_DTW(HMM,trans_mat,data1)
+        new_segs2, new_tr2, best_cost2 = do_DTW(HMM,trans_mat,data2)
+        new_segs3, new_tr3, best_cost3 = do_DTW(HMM,trans_mat,data3)
+        new_segs4, new_tr4, best_cost4 = do_DTW(HMM,trans_mat,data4)
 
+        avg_best_cost = 0.25 * (best_cost0 + best_cost1 + best_cost2
+                                + best_cost3 + best_cost4)
+
+        print 'Iteration',i,' cost: ',avg_best_cost
         # Update rules
     
         segs = np.concatenate((new_segs0.transpose(),
