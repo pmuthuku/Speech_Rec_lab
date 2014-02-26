@@ -10,8 +10,12 @@ def do_DTW(HMM, data):
     
     for i in xrange(5):
         inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
-        DTW_dist[i][:] = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
+        tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
                                                       'mahalanobis',VI=inv_cov)
+        DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
+
+    np.savetxt('dist_file',DTW_dist)
+                                              
 
     # Do actual DTW: Anurag's code
     m,n = np.shape(DTW_dist)
@@ -38,7 +42,7 @@ def do_DTW(HMM, data):
                DTW_bptr[i,j] = i-2
        k=k+2
 
-    #np.savetxt('bptr_file',DTW_bptr)
+    np.savetxt('bptr_file',DTW_bptr)
 
     seg = np.zeros((4,1)) # 4 cuts
 
@@ -142,10 +146,10 @@ def train_hmm(digit):
 
     # Do DTW between HMM and data sequence
     do_DTW(HMM,data0)
-    do_DTW(HMM,data1)
-    do_DTW(HMM,data2)
-    do_DTW(HMM,data3)
-    do_DTW(HMM,data4)
+#     do_DTW(HMM,data1)
+#     do_DTW(HMM,data2)
+#     do_DTW(HMM,data3)
+#     do_DTW(HMM,data4)
 
 
 if __name__ == '__main__':
