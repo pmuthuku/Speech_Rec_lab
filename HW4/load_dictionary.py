@@ -53,9 +53,8 @@ if __name__ == '__main__':
             if Node(char) in tree_ptr.children:
                 required_child_present = True
             # if required_child_present and not tree_ptr.children[tree_ptr.children.index(Node(char))].end_of_word:
-            if required_child_present and \
-                    not tree_ptr.children[findall(tree_ptr.children, lambda x: x == Node(char))[-1]].end_of_word:
-                tree_ptr = tree_ptr.children[tree_ptr.children.index(Node(char))]
+            if required_child_present and not tree_ptr.children[findall(tree_ptr.children, lambda x: x == Node(char))[-1]].end_of_word:
+                tree_ptr = tree_ptr.children[findall(tree_ptr.children, lambda x: x == Node(char))[-1]]
             else:
                 new_node = Node(char)
                 if is_last_char : new_node.end_of_word = True
