@@ -47,6 +47,38 @@ def findall(list, test_function):
             return indices
 
 
+def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
+    ptr = np.shape(dist_matrix)[0] -1
+    min_idxes = np.where(dist_matrix[ptr, :] == np.amin(dist_matrix[ptr, :]))[0]
+    idx = min_idxes[0]
+    (next_i, next_j) = (dist_matrix.shape[0]-1, idx)
+    reset = False
+    i = dist_matrix.shape[0] - 1
+    while i >= 0:
+        for j in range(dist_matrix.shape[1])[::-1]:
+            # if(reset):
+                # i = i + 2; reset = False;
+                # (next_i, next_j) = (ptr, np.where(dist_matrix[ptr,:] == np.amin(dist_matrix[ptr,:]))[0][0])
+                # ptr = ptr + 1;
+                # continue;
+            format_str = ''
+            if(i == next_i and j == next_j):
+                format_str = Back.RED
+                if bkptr_matrix[i][j] == 0: (next_i, next_j) = (i - 1, j)
+                elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i - 1, rlist[j])
+                elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i, rlist[j])
+            if(j == 0 and format_str == Back.RED):
+                format_str = format_str + '*'
+                reset = True
+            data_str = '%4.0f' % (dist_matrix[i][j]) + ' ' + Back.WHITE
+            sys.stdout.write(format_str + data_str)
+
+        i = i -1
+        print('\n')
+        ptr = ptr -1;
+
+
+
 def main():
     k=0 #overall counter-- at the end it will give total number nodes
     root = Node('*')
@@ -115,12 +147,10 @@ def main():
     #   |   : 2
     #   |
 
-    # for word in wlist:
     for i in range(len(word) + 1):
         if i != 0 :input_char = word[i - 1]
         else : input_char = '*'
 
-        # matrix.append([])
         for j, template_char in enumerate(nlist):
             if(i == 0 and  j == 0):
                 dist_matrix[i][j] = 0
@@ -154,6 +184,7 @@ def main():
             dist_matrix[i][j] = min(c1, c2, c3)
             pass
 
+    custom_print(bkptr_matrix, dist_matrix, rlist, elist)
     pass
 
 
