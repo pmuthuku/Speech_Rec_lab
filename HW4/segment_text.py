@@ -6,7 +6,7 @@ from colorama import Back, Fore
 
 np.set_printoptions(threshold='nan', linewidth = 200)
 
-DICTIONARY_FILE_NAME='small_dict.txt'
+DICTIONARY_FILE_NAME='dict.txt'
 
 class Node:
     def __init__(self, value):
@@ -48,12 +48,15 @@ def findall(list, test_function):
             return indices
 
 
-def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
+def custom_print(bkptr_matrix_row,bkptr_matrix_col, dist_matrix, rlist, elist, nlist, word):
     ptr = np.shape(dist_matrix)[0] -1
     word_end_indices = np.where(np.array(elist) == 1)[0];
     (next_i, next_j) = (dist_matrix.shape[0]-1, (word_end_indices[np.where(dist_matrix[ptr, word_end_indices] == np.amin(dist_matrix[ptr, :]))[0]]))
     reset = False
     i = dist_matrix.shape[0] - 1
+
+    result = []
+
     while i >= 0:
         for j in range(dist_matrix.shape[1])[::-1]:
             # if(reset):
@@ -66,9 +69,11 @@ def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
             format_str = ''
             if(i == next_i and j == next_j):
                 format_str = Back.RED
-                if bkptr_matrix[i][j] == 0: (next_i, next_j) = (i - 1, j)
-                elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i - 1, rlist[j])
-                elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i, rlist[j])
+                next_i = bkptr_matrix_row[i][j]
+                next_j = bkptr_matrix_col[i][j]
+
+                if j == 0: result.append(i)
+
             if(j == 0 and format_str == Back.RED):
                 format_str = format_str + '*'
                 reset = True
@@ -78,6 +83,15 @@ def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
         i = i -1
         print('\n')
         ptr = ptr -1;
+
+    result = [k - 1 for k in result]
+    print result
+
+    for idx, chr in enumerate(word):
+        if idx in result:
+            sys.stdout.write(' '),
+            sys.stdout.write(chr)
+        else: sys.stdout.write(chr),
 
 
 
@@ -139,8 +153,10 @@ def main():
 
     dist_matrix = np.empty([len(word) + 1, k+1])
     dist_matrix[:,:] = float('inf')
-    bkptr_matrix = np.empty_like(dist_matrix)
-    bkptr_matrix[:,:] = -1
+    bkptr_matrix_row = np.empty_like(dist_matrix)
+    bkptr_matrix_col = np.empty_like(dist_matrix)
+    bkptr_matrix_row[:,:] = -1
+    bkptr_matrix_col[:,:] = -1
 
     # Back Pointer Config
 
@@ -157,17 +173,23 @@ def main():
         for j, template_char in enumerate(nlist):
             if(i == 0 and  j == 0):
                 dist_matrix[i][j] = 0
-                bkptr_matrix[i][j] = -1
+                bkptr_matrix_row[i][j] = -1
+                bkptr_matrix_col[i][j] = -1
                 continue
             if(i == 0):
                 dist_matrix[i][j] = dist_matrix[i][rlist[j]] + 1
-                bkptr_matrix[i][j] = 2
+                bkptr_matrix_row[i][j] = i
+                bkptr_matrix_col[i][j] = rlist[j]
                 continue
 
             if(j == 0):
                 word_end_indices = np.where(np.array(elist) == 1)[0];
                 dist_matrix[i][j] = np.amin(dist_matrix[i-1,word_end_indices])
-                bkptr_matrix[i][j] = 0
+                temp = np.empty_like(dist_matrix[i-1,:])
+                temp[:] = -1
+                temp[word_end_indices] = dist_matrix[i-1,word_end_indices]
+                bkptr_matrix_col[i][j] = np.where(dist_matrix[i][j] == temp)[0][0]
+                bkptr_matrix_row[i][j] = i - 1
                 continue
 
             c1 = dist_matrix[i-1][j] + 1
@@ -180,16 +202,22 @@ def main():
             this_cost = min(c1, c2, c3)
 
             ## HACK HACK. MUST CLEAN THIS CODE
-            if this_cost == c3: bkptr_matrix[i][j] = 1
-            elif this_cost == c2: bkptr_matrix[i][j] = 2
-            elif this_cost == c1: bkptr_matrix[i][j] = 0
+            if this_cost == c3:
+                bkptr_matrix_row[i][j] = i - 1
+                bkptr_matrix_col[i][j] = rlist[j]
+            elif this_cost == c2:
+                bkptr_matrix_row[i][j] = i
+                bkptr_matrix_col[i][j] = rlist[j]
+            elif this_cost == c1:
+                bkptr_matrix_row[i][j] = i -1
+                bkptr_matrix_col[i][j] = j
             ##################################
 
             dist_matrix[i][j] = this_cost
             dist_matrix[i][j] = min(c1, c2, c3)
             pass
 
-    custom_print(bkptr_matrix, dist_matrix, rlist, elist)
+    custom_print(bkptr_matrix_row, bkptr_matrix_col, dist_matrix, rlist, elist, nlist, word)
     pass
 
 
