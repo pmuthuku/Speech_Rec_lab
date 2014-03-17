@@ -50,28 +50,29 @@ def findall(list, test_function):
 
 def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
     ptr = np.shape(dist_matrix)[0] -1
-    min_idxes = np.where(dist_matrix[ptr, :] == np.amin(dist_matrix[ptr, :]))[0]
-    idx = min_idxes[0]
-    (next_i, next_j) = (dist_matrix.shape[0]-1, idx)
+    word_end_indices = np.where(np.array(elist) == 1)[0];
+    (next_i, next_j) = (dist_matrix.shape[0]-1, (word_end_indices[np.where(dist_matrix[ptr, word_end_indices] == np.amin(dist_matrix[ptr, :]))[0]]))
     reset = False
     i = dist_matrix.shape[0] - 1
     while i >= 0:
         for j in range(dist_matrix.shape[1])[::-1]:
             # if(reset):
-                # i = i + 2; reset = False;
-                # (next_i, next_j) = (ptr, np.where(dist_matrix[ptr,:] == np.amin(dist_matrix[ptr,:]))[0][0])
-                # ptr = ptr + 1;
-                # continue;
+            #     i = i + 1;
+            #
+            #     reset = False;
+            #     (next_i, next_j) = (dist_matrix.shape[0]-1, (word_end_indices[np.where(dist_matrix[ptr, word_end_indices] == np.amin(dist_matrix[ptr, :]))[0]]))
+            #     ptr = ptr + 1;
+            #     continue;
             format_str = ''
             if(i == next_i and j == next_j):
-                format_str = Fore.RED
+                format_str = Back.RED
                 if bkptr_matrix[i][j] == 0: (next_i, next_j) = (i - 1, j)
                 elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i - 1, rlist[j])
                 elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i, rlist[j])
-            if(j == 0 and format_str == Fore.RED):
+            if(j == 0 and format_str == Back.RED):
                 format_str = format_str + '*'
                 reset = True
-            data_str = '%-4.0f' % (dist_matrix[i][j]) + ' ' + Fore.BLACK
+            data_str = '%-4.0f' % (dist_matrix[i][j]) + ' ' + Back.WHITE
             sys.stdout.write(format_str + data_str)
 
         i = i -1
@@ -136,8 +137,9 @@ def main():
 
     print wlist
 
-    dist_matrix = np.zeros([len(word) + 1, k+1])
-    bkptr_matrix = np.zeros_like(dist_matrix)
+    dist_matrix = np.empty([len(word) + 1, k+1])
+    dist_matrix[:,:] = float('inf')
+    bkptr_matrix = np.empty_like(dist_matrix)
     bkptr_matrix[:,:] = -1
 
     # Back Pointer Config
@@ -163,14 +165,16 @@ def main():
                 continue
 
             if(j == 0):
-                dist_matrix[i][j] = i
+                word_end_indices = np.where(np.array(elist) == 1)[0];
+                dist_matrix[i][j] = np.amin(dist_matrix[i-1,word_end_indices])
                 bkptr_matrix[i][j] = 0
                 continue
 
             c1 = dist_matrix[i-1][j] + 1
-            c2 = dist_matrix[i][rlist[j]] + 1
             factor = 1
             if template_char == input_char: factor = 0
+
+            c2 = dist_matrix[i][rlist[j]] + factor
             c3 = dist_matrix[i-1][rlist[j]] + factor
 
             this_cost = min(c1, c2, c3)
