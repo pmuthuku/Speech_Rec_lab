@@ -1,9 +1,11 @@
+import numpy as np
 import time
 import re
 import sys
 from colorama import Back
+np.set_printoptions(threshold='nan', linewidth = 200)
 
-DICTIONARY_FILE_NAME='dict.txt'
+DICTIONARY_FILE_NAME='small_dict.txt'
 
 class Node:
     def __init__(self, value):
@@ -65,7 +67,7 @@ def main():
 
             if Node(char) in tree_ptr.children:
                 required_child_present = True
-            # if required_child_present and not tree_ptr.children[tree_ptr.children.index(Node(char))].end_of_word:
+
             if required_child_present and not tree_ptr.children[findall(tree_ptr.children, lambda x: x == Node(char))[-1]].end_of_word:
                 tree_ptr = tree_ptr.children[findall(tree_ptr.children, lambda x: x == Node(char))[-1]]
             else:
@@ -89,16 +91,8 @@ def main():
     print map(str,range(0, len(nlist)))
     print rlist
     print map(str,elist)
-    
 
-
-
-    # Code below does spell error counting useless for problem 2
-
-
-    #################################################################################################################################
-
-    fl=open('typos.txt')
+    fl=open('small_unsegmented.txt')
     wlist=[]
     for line in fl.readlines():
        ls=line.strip()
@@ -106,70 +100,62 @@ def main():
        for word in ls.split():
            if not word=="":
                wlist.append(word.lower())
-    
-    print wlist
-    # time.sleep(60)
-    # wlist=[l.strip() for l in fl]
-    # wlist=['oncd','uoon','a','time','0909']
-    cptr=root
-    print wlist
-    print cptr.children.index(Node('c'))
-    nerr=0
-    chk=root.children[19]
-    print chk.value
-    print len(chk.children)
-    print chk.end_of_word
-    errwords=[]
-    for wd in wlist:
-       wlen=len(wd)
-       cptr=root
-       print 'processing {0}'.format(wd)
-       for m,c in enumerate(wd):
-           ids=[]
-           ids=[i for i,nd in enumerate(cptr.children) if nd==Node(c)]
-            #print '{0}---{1}--{2}'.format(c,ids,cptr.value)
-           if len(ids)==0:
-               nerr=nerr+1
-               errwords[len(errwords):]=[wd]
-                #print '{0} error in {1} with {2}'.format(c,wd,nerr)
-               break
-           else:
-                
-               if m!=wlen-1:
-                   if len(ids)==1:
-                       cptr=cptr.children[ids[0]]
-                   elif len(ids)==2:
-                       if not cptr.children[ids[0]].end_of_word:
-                           cptr=cptr.children[ids[0]]
-                            #print "here"
-                            #for gh in cptr.children:
-                            #    print gh.value
-                       elif not cptr.children[ids[1]].end_of_word:
-                           cptr=cptr.children[ids[1]]
-                            #print cptr.value
-                            #print len(cptr.children)
-                            #print "hereb"
-                            #print
-                            #for gh in cptr.children:
-                            #    print gh.value
-                       else:  # A few extra checks to make sure that tree is proper
-                           print "Something Wrong --- Two Children with same value but flags for both are ON "
-                           sys.exit()
-                   else:
-                       print "Three Children with same value-- NOT POSSIBLE"
-                       sys.exit()
 
-               elif m==wlen-1:
-                   if len(ids)==1: #if teo nodes one flag is bound to be true
-                       if not cptr.children[ids[0]].end_of_word:
-                           nerr=nerr+1
-                           errwords[len(errwords):]=[wd]
-                    
-                               
-    print Back.RED + str(nerr) + '  ERRORS' + Back.WHITE
-    print len(wlist)
-    for w in errwords:
-       print w
+    print wlist
+
+    dist_matrix = np.zeros([len(word) + 1, k+1])
+    bkptr_matrix = np.zeros_like(dist_matrix)
+    bkptr_matrix[:,:] = -1
+
+    # Back Pointer Config
+
+    #  ---  : 0
+    #    /  : 1
+    #   /
+    #   |   : 2
+    #   |
+
+    # for word in wlist:
+    for i in range(len(word) + 1):
+        if i != 0 :input_char = word[i - 1]
+        else : input_char = '*'
+
+        # matrix.append([])
+        for j, template_char in enumerate(nlist):
+            if(i == 0 and  j == 0):
+                dist_matrix[i][j] = 0
+                bkptr_matrix[i][j] = -1
+                continue
+            if(i == 0):
+                dist_matrix[i][j] = dist_matrix[i][rlist[j]] + 1
+                bkptr_matrix[i][j] = 2
+                continue
+
+            if(j == 0):
+                dist_matrix[i][j] = i
+                bkptr_matrix[i][j] = 0
+                continue
+
+            c1 = dist_matrix[i-1][j] + 1
+            c2 = dist_matrix[i][rlist[j]] + 1
+            factor = 1
+            if template_char == input_char: factor = 0
+            c3 = dist_matrix[i-1][rlist[j]] + factor
+
+            this_cost = min(c1, c2, c3)
+
+            ## HACK HACK. MUST CLEAN THIS CODE
+            if this_cost == c3: bkptr_matrix[i][j] = 1
+            elif this_cost == c2: bkptr_matrix[i][j] = 2
+            elif this_cost == c1: bkptr_matrix[i][j] = 0
+            ##################################
+
+            dist_matrix[i][j] = this_cost
+            dist_matrix[i][j] = min(c1, c2, c3)
+            pass
+
+    pass
+
 
 if __name__ == '__main__':
     main()

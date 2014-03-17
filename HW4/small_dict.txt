@@ -1,3 +1,5 @@
+a
+and
 banana
 bat
 battle
