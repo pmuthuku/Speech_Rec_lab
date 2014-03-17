@@ -2,7 +2,8 @@ import numpy as np
 import time
 import re
 import sys
-from colorama import Back
+from colorama import Back, Fore
+
 np.set_printoptions(threshold='nan', linewidth = 200)
 
 DICTIONARY_FILE_NAME='small_dict.txt'
@@ -63,14 +64,14 @@ def custom_print(bkptr_matrix, dist_matrix, rlist, elist):
                 # continue;
             format_str = ''
             if(i == next_i and j == next_j):
-                format_str = Back.RED
+                format_str = Fore.RED
                 if bkptr_matrix[i][j] == 0: (next_i, next_j) = (i - 1, j)
                 elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i - 1, rlist[j])
                 elif bkptr_matrix[i][j] == 1: (next_i, next_j) = (i, rlist[j])
-            if(j == 0 and format_str == Back.RED):
+            if(j == 0 and format_str == Fore.RED):
                 format_str = format_str + '*'
                 reset = True
-            data_str = '%4.0f' % (dist_matrix[i][j]) + ' ' + Back.WHITE
+            data_str = '%-4.0f' % (dist_matrix[i][j]) + ' ' + Fore.BLACK
             sys.stdout.write(format_str + data_str)
 
         i = i -1
