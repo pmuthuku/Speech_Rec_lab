@@ -51,7 +51,7 @@ def findall(list, test_function):
 def custom_print(bkptr_matrix_row,bkptr_matrix_col, dist_matrix, rlist, elist, nlist, word):
     ptr = np.shape(dist_matrix)[0] -1
     word_end_indices = np.where(np.array(elist) == 1)[0];
-    (next_i, next_j) = (dist_matrix.shape[0]-1, (word_end_indices[np.where(dist_matrix[ptr, word_end_indices] == np.amin(dist_matrix[ptr, :]))[0]]))
+    (next_i, next_j) = (dist_matrix.shape[0]-1, (word_end_indices[np.where(dist_matrix[ptr, word_end_indices] == np.amin(dist_matrix[ptr, :]))[0]][0]))
     reset = False
     i = dist_matrix.shape[0] - 1
 
@@ -78,11 +78,16 @@ def custom_print(bkptr_matrix_row,bkptr_matrix_col, dist_matrix, rlist, elist, n
                 format_str = format_str + '*'
                 reset = True
             data_str = '%-4.0f' % (dist_matrix[i][j]) + ' ' + Back.WHITE
+            if j == 0: data_str = data_str +  '%-5s'%word[i - 1]
             sys.stdout.write(format_str + data_str)
 
         i = i -1
         print('\n')
-        ptr = ptr -1;
+        ptr = ptr -1
+
+    for chr in nlist[::-1]:
+        sys.stdout.write('%-5s'%chr)
+    print '\n'
 
     result = [k - 1 for k in result]
     print result
@@ -141,15 +146,17 @@ def main():
     print map(str,elist)
 
     fl=open('small_unsegmented.txt')
-    wlist=[]
+    word=''
     for line in fl.readlines():
        ls=line.strip()
        ls=re.sub('[!@#\"?,.;:]','',ls)
-       for word in ls.split():
-           if not word=="":
-               wlist.append(word.lower())
+       word=word+ls
+       #for word in ls.split():
+       #    if not word=="":
+       #        wlist.append(word.lower())
 
-    print wlist
+    print word
+    #print wlist
 
     dist_matrix = np.empty([len(word) + 1, k+1])
     dist_matrix[:,:] = float('inf')
@@ -202,11 +209,12 @@ def main():
             this_cost = min(c1, c2, c3)
 
             ## HACK HACK. MUST CLEAN THIS CODE
-            if this_cost == c3:
-                bkptr_matrix_row[i][j] = i - 1
-                bkptr_matrix_col[i][j] = rlist[j]
-            elif this_cost == c2:
+
+            if this_cost == c2:
                 bkptr_matrix_row[i][j] = i
+                bkptr_matrix_col[i][j] = rlist[j]
+            elif this_cost == c3:
+                bkptr_matrix_row[i][j] = i - 1
                 bkptr_matrix_col[i][j] = rlist[j]
             elif this_cost == c1:
                 bkptr_matrix_row[i][j] = i -1

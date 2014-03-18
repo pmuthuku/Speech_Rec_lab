@@ -1268,11 +1268,11 @@ doner
 donkey
 donkeys
 donkey's
-donkey’s
+donkeyï¿½s
 donlon
 donny
 don't
-don’t
+donï¿½t
 donuts'
 dooms
 doornail
@@ -2248,7 +2248,7 @@ heart
 heartbeats
 hearts
 heart's
-heart’s
+heartï¿½s
 heartwise
 heatherington
 heavier
@@ -3046,7 +3046,7 @@ lessin
 let
 leto
 let's
-let’s
+letï¿½s
 letting
 leupold
 levchenko
@@ -3093,7 +3093,7 @@ linsky
 liomine
 lion
 lion's
-lion’s
+lionï¿½s
 lipide
 lipper
 lipshie
