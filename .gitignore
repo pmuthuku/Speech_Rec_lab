@@ -1,0 +1,11 @@
+*.idea/*
+*.*~
+*.wav
+*.data
+*.eps
+*.txt
+*.pyc
+*.mfcc
+*.tar.gz
+dummy.pl
+kernprof.py
