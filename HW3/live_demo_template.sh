@@ -18,4 +18,4 @@ python extract_feats.py right_output.wav
 
 python HW3_1f.py -d mel_cep.data 5
 
-rm -f output.wav right_output.wav
+#rm -f output.wav right_output.wav

@@ -7,9 +7,11 @@ NO_OF_LEVELS = 2
 NO_OF_HMM = 10
 NO_OF_STATES = 5
 
-input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
-
-
+input_seq = np.zeros((39,NO_OF_TIME_SEQ))
+# input_seq = np.loadtxt('new_recordings/anoop_1.mfcc').transpose()
+# input_seq = np.asarray(input_seq)
+NO_OF_TIME_SEQ = input_seq.shape[1]
+pass
 
 
 trans_names = ['models/0.trans',
@@ -51,9 +53,11 @@ for hmm_idx, hmm_file in enumerate(hmm_names):
 
 for trns_idx, trans_file in enumerate(trans_names):
     f = np.loadtxt(trans_file)
-
+    
     # truncated_trans = f[2:, :]
     for j in range(NO_OF_STATES):
+        x=np.delete(f[2+j, :], np.where(f[2+j, :] == np.inf), axis=0)
+        print x
         trans_list[trns_idx][j, j:min(j+3, NO_OF_STATES)] = np.delete(f[2+j, :], np.where(f[2+j, :] == np.inf), axis=0)
 
 class graph:
@@ -78,7 +82,7 @@ def calculate_C(xn, mu, sigma):
     # sigma_sqr = sigma     --> In case sigma squared was stored instead of sigma
     sigma_sqr = np.square(sigma)
     term1 = np.sum(np.log(sigma_sqr * 2 * np.math.pi)) * (-0.5)
-    term2 = np.sum(np.divide(np.square(xn -mu), sigma_sqr)) * (-0.5)
+    term2 = np.sum(np.divide(np.square(xn - mu), sigma_sqr)) * (-0.5)
     C = term1 + term2
     return  C
 
@@ -123,10 +127,10 @@ class template_node:
             self.sigma = sigma_list[HMM_no][state_no]
         self.non_emitting = non_emitting
         self.identifier = [level_no, HMM_no, state_no, time]
-
+        #print len(self.parents)
         # Compute C
         if(HMM_no != -1):
-            C = calculate_C(input_seq[time], self.mu, self.sigma)
+            C = calculate_C(input_seq[:, time], self.mu, self.sigma)
         else: C = 0
         self.C = C
 
@@ -138,6 +142,7 @@ class template_node:
 
 def main():
     for t in range(0, NO_OF_TIME_SEQ):
+        print t
         for i in range(0, NO_OF_LEVELS):
             t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
             for j in range(0, NO_OF_HMM):
