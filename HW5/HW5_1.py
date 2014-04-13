@@ -9,7 +9,7 @@ NO_OF_HMM = 10
 NO_OF_STATES = 5
 
 #input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
-input_seq = np.loadtxt('new_recordings/anoop_1.mfcc')#.transpose()
+input_seq = np.loadtxt('new_recordings/anurag_1.mfcc')#.transpose()
 #input_seq = np.asarray(input_seq)
 #input_seq.shape
 NO_OF_TIME_SEQ = input_seq.shape[0]
@@ -195,21 +195,22 @@ def main():
     
     print kk
     #print t_graph.template_nodes
-    for i,j in enumerate(t_graph.template_nodes):
-        if len(j.parents)==0:
-            print '{0}---{1}--empty---{2}--{3}'.format(i,j.identifier,j.C,j.P)
-        else:
-            for pr in j.parents:
-                print '{0}---{1}--{2}---{3}---{4}'.format(i,j.identifier,pr.identifier,j.C,j.P)
+    for time_seq,list_at_time_seq in enumerate(t_graph.template_nodes):
+        for node in list_at_time_seq:
+            if len(node.parents)==0:
+                print '{0}---{1}--empty---{2}--{3}'.format(time_seq,node.identifier, node.C, node.P)
+            else:
+                for pr in node.parents:
+                    print '{0}---{1}--{2}---{3}---{4}'.format(time_seq,node.identifier,pr.identifier,node.C,node.P)
 
     tt=NO_OF_TIME_SEQ
-    curr_nod=t_graph.template_nodes[NO_OF_TIME_SEQ - 1]
+    curr_nod=t_graph.template_nodes[NO_OF_TIME_SEQ - 1][-1]
     while tt-1 >= 0:
         best_par=curr_nod.best_parent
         print '{0}----{1}'.format(curr_nod.identifier,best_par.identifier)
         curr_nod=curr_nod.best_parent
         tt=tt-1
-        
+
 
 if __name__ == "__main__":
     main()
