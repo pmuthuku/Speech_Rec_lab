@@ -100,10 +100,15 @@ def calculate_C(xn, mu, sigma):
 
 
     #if not working try the numpy cdist calculation
-    sigma_sqr = sigma # np.square(sigma)
-    term1 = np.sum(np.log(sigma_sqr * 2 * np.math.pi)) * (-0.5)
-    term2 = np.sum(np.divide(np.square(xn - mu), sigma_sqr)) * (-0.5)
-    C = term1 + term2
+    #sigma_sqr = sigma # np.square(sigma)
+    #term1 = np.sum(np.log(sigma_sqr * 2 * np.math.pi)) * (-0.5)
+    #term2 = np.sum(np.divide(np.square(xn - mu), sigma_sqr)) * (-0.5)
+    #C = term1 + term2
+    inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
+    tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
+                                      #          'euclidean')
+                                                'mahalanobis',VI=inv_cov)
+    C = -(0.5*tmp_dist)-(0.5*np.log(np.prod(vars[i][:])))-(19.5*np.log(2*np.pi))
     return  C
 
 def calculate_P(parents, identifier, C):
@@ -157,14 +162,16 @@ class template_node:
         # Compute C
         if(HMM_no != -1):
             if time==0:
-                if state_no==0:
+                if state_no==0 and level_no==0:
                     C = calculate_C(input_seq[time,:], self.mu, self.sigma)
                 else:
                     C=-1*np.inf
             else:
                 C = calculate_C(input_seq[time,:], self.mu, self.sigma)
         else:
-            if time == 0:
+            if level_no == 0: #for third problem make it level_no ==0 and time==0
+                C = -1*np.inf
+            elif time == 0:
                 C = -1*np.inf
             else:
                 C = 0
