@@ -22,8 +22,65 @@ def cleanup_names(seq_nums):
     words = seq_nums[:-1]
     filenm = seq_nums[-1]
 
+    model_names = [ words2num[x] for x in words]
     
+    return model_names, filenm
 
+    
+class state:
+
+    def __init__(self, means, vars, self_trans, next_trans, next_next_trans,
+                 non_emitting=False):
+        '''means -> 39 dimensional mean
+           vars -> 39 dimensional variances
+           self_trans -> log probability of staying in same state
+           next_trans, next_next_trans -> self explanatory'''
+        self.means = means
+        self.vars = vars
+        self.self_trans = self_trans
+        self.next_trans = next_trans
+        self.next_next_trans = next_next_trans
+        self.non_emitting = non_emitting
+
+
+
+class hmm:
+    def __init__(self, symbol):
+        ''' symbol: the digit in question '''
+
+        # Read in emission probabilities
+        emis_prob = np.loadtxt('models/'+symbol+'.hmm')
+        # Read in transition probabilities
+        trans_prob = np.loadtxt('models/'+symbol+'.trans')
+
+        num_states = 5
+
+        self.states=[]
+
+        for i in xrange(num_states + 2): # The plus two is for non-emitting states
+            # Non-emitting states first
+            j=0
+            if i < 2:
+                self.states.append(state(means=0, vars=0, self_trans=trans_prob[i][0],
+                                   next_trans=trans_prob[i][1], 
+                                   next_next_trans=trans_prob[i][2],non_emitting=True))
+            else:
+                self.states.append(state(means=emis_prob[j],
+                                   vars=emis_prob[j+1],
+                                   self_trans=trans_prob[i][0],
+                                   next_trans=trans_prob[i][1],
+                                   next_next_trans=trans_prob[i][2]))
+
+        pass
+            
+
+
+def train_hmm(mapped_symbs, filenm):
+    
+    first_symb=mapped_symbs[0]
+    hmm1 = hmm(symbol=first_symb)
+
+    pass
 
 def train_cont_hmms(transcrps, dirname):
     
@@ -43,7 +100,12 @@ def train_cont_hmms(transcrps, dirname):
 
     # Read each line of the transcript, compose model and train
     for i in xrange(len(trans)):
-        mapped_symbs = cleanup_names(trans[i])
+        # Clean up names
+        mapped_symbs,filenm = cleanup_names(trans[i])
+
+        # Put models together and train
+        train_hmm(mapped_symbs, filenm)
+        
 
     pass
 
