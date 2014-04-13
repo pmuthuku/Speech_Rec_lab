@@ -3,13 +3,13 @@ import copy
 import numpy as np
 np.set_printoptions(threshold='nan', precision=3)
 
-#NO_OF_TIME_SEQ = 3
+# NO_OF_TIME_SEQ = 3
 NO_OF_LEVELS = 10
 NO_OF_HMM = 10
 NO_OF_STATES = 5
 
-#input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
-input_seq = np.loadtxt('new_recordings/anurag_1.mfcc')#.transpose()
+# input_seq = np.zeros((NO_OF_TIME_SEQ, 39))
+input_seq = np.loadtxt('new_recordings/anoop_1.mfcc')#.transpose()
 #input_seq = np.asarray(input_seq)
 #input_seq.shape
 NO_OF_TIME_SEQ = input_seq.shape[0]
@@ -176,11 +176,11 @@ class template_node:
 
 
 
-
 def main():
+    result = np.array([-1])
     kk=0
     for t in range(0, NO_OF_TIME_SEQ):
-        print t
+        # print t
         st=time.time()
         for i in range(0, NO_OF_LEVELS):
             t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
@@ -190,27 +190,31 @@ def main():
                     kk=kk+1
         t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True))
         et=time.time()
-        print et-st
+        # print et-st
     t_graph.find_node_by([0], [1], [0])
-    
-    print kk
-    #print t_graph.template_nodes
-    for time_seq,list_at_time_seq in enumerate(t_graph.template_nodes):
-        for node in list_at_time_seq:
-            if len(node.parents)==0:
-                print '{0}---{1}--empty---{2}--{3}'.format(time_seq,node.identifier, node.C, node.P)
-            else:
-                for pr in node.parents:
-                    print '{0}---{1}--{2}---{3}---{4}'.format(time_seq,node.identifier,pr.identifier,node.C,node.P)
+
+    # print kk
+    # #print t_graph.template_nodes
+    # for time_seq,list_at_time_seq in enumerate(t_graph.template_nodes):
+    #     for node in list_at_time_seq:
+    #         if len(node.parents)==0:
+    #             print '{0}---{1}--empty---{2}--{3}'.format(time_seq,node.identifier, node.C, node.P)
+    #         else:
+    #             for pr in node.parents:
+    #                 print '{0}---{1}--{2}---{3}---{4}'.format(time_seq,node.identifier,pr.identifier,node.C,node.P)
 
     tt=NO_OF_TIME_SEQ
     curr_nod=t_graph.template_nodes[NO_OF_TIME_SEQ - 1][-1]
     while tt-1 >= 0:
         best_par=curr_nod.best_parent
         print '{0}----{1}'.format(curr_nod.identifier,best_par.identifier)
+        if (result[-1] != curr_nod.identifier[1]): result = np.append(result, curr_nod.identifier[1])
         curr_nod=curr_nod.best_parent
         tt=tt-1
 
+    result = np.delete(result, np.where(result == -1))[::-1]
+    print '\n\nYou Said -- > '
+    print result
 
 if __name__ == "__main__":
     main()
