@@ -1,3 +1,4 @@
+import time
 import copy
 import numpy as np
 np.set_printoptions(threshold='nan', precision=3)
@@ -79,15 +80,17 @@ class graph:
     def add_node(self, template_node):
         #self.template_nodes.append(copy.deepcopy(template_node))
         #self.template_nodes.append(template_node)
-        self.template_nodes[len(self.template_nodes):]=[template_node]
+        # self.template_nodes[len(self.template_nodes):]=[template_node]
+        if(len(self.template_nodes) <= template_node.identifier[3]):
+            self.template_nodes.append([])
+        self.template_nodes[template_node.identifier[3]].append(template_node)
     def find_node_by(self, level_no, hmm_no, state_no, time_seq=-1):
-        this_level = list(filter(lambda _: _.identifier[0] in level_no, self.template_nodes))
+        this_time = self.template_nodes[time_seq]
+
+        this_level = list(filter(lambda _: _.identifier[0] in level_no, this_time))
         this_hmm = list(filter(lambda _: _.identifier[1] in hmm_no, this_level))
         this_state = list(filter(lambda _: _.identifier[2] in state_no, this_hmm))
-        if (time_seq != -1):
-            this_state = list(filter(lambda _: _.identifier[3] == time_seq, this_state))
         return this_state
-
 
 t_graph = graph()
 
@@ -178,13 +181,16 @@ def main():
     kk=0
     for t in range(0, NO_OF_TIME_SEQ):
         print t
+        st=time.time()
         for i in range(0, NO_OF_LEVELS):
             t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
             for j in range(0, NO_OF_HMM):
                 for k in range(0, NO_OF_STATES):
                     t_graph.add_node(template_node(i, j, k, time=t))
                     kk=kk+1
-        t_graph.add_node(template_node(2, -1, 0, time=t, non_emitting=True))
+        t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True))
+        et=time.time()
+        print et-st
     t_graph.find_node_by([0], [1], [0])
     
     print kk
