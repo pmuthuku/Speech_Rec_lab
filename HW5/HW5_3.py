@@ -3,13 +3,13 @@ import copy
 import numpy as np
 np.set_printoptions(threshold='nan', precision=3)
 
-#NO_OF_TIME_SEQ = 3
-NO_OF_LEVELS = 10
+NO_OF_TIME_SEQ = 3
+NO_OF_LEVELS = 1
 NO_OF_HMM = 10
 NO_OF_STATES = 5
 
-#input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
-input_seq = np.loadtxt('new_recordings/anoop_1.mfcc')#.transpose()
+input_seq = np.zeros((NO_OF_TIME_SEQ, 39))
+# input_seq = np.loadtxt('new_recordings/anoop_1.mfcc')#.transpose()
 #input_seq = np.asarray(input_seq)
 #input_seq.shape
 NO_OF_TIME_SEQ = input_seq.shape[0]
@@ -137,7 +137,7 @@ class template_node:
         if (time == 0):
             self.parents = []
         elif (level_no == 0 and non_emitting == True):
-            self.parents = []
+            self.parents = t_graph.find_node_by([NO_OF_LEVELS], [-1], [0], time_seq=time-1)
         elif (non_emitting == True):
             self.parents = t_graph.find_node_by([level_no - 1], range(NO_OF_HMM), [NO_OF_STATES - 1], time_seq=time)
         elif (state_no == 0):
@@ -157,14 +157,16 @@ class template_node:
         # Compute C
         if(HMM_no != -1):
             if time==0:
-                if state_no==0:
+                if state_no==0 and level_no==0:
                     C = calculate_C(input_seq[time,:], self.mu, self.sigma)
                 else:
                     C=-1*np.inf
             else:
                 C = calculate_C(input_seq[time,:], self.mu, self.sigma)
         else:
-            if time == 0:
+            if level_no == 0:
+                C = -1*np.inf
+            elif time == 0:
                 C = -1*np.inf
             else:
                 C = 0
@@ -174,11 +176,11 @@ class template_node:
 
 
 
-
 def main():
+    result = np.array([-1])
     kk=0
     for t in range(0, NO_OF_TIME_SEQ):
-        #print t
+        # print t
         st=time.time()
         for i in range(0, NO_OF_LEVELS):
             t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
@@ -188,30 +190,31 @@ def main():
                     kk=kk+1
         t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True))
         et=time.time()
-        #print et-st
+        # print et-st
     t_graph.find_node_by([0], [1], [0])
-    
-    print kk
-    #print t_graph.template_nodes
-    #for time_seq,list_at_time_seq in enumerate(t_graph.template_nodes):
-    #    for node in list_at_time_seq:
-    #        if len(node.parents)==0:
-    #            print '{0}---{1}--empty---{2}--{3}'.format(time_seq,node.identifier, node.C, node.P)
-    #        else:
-    #            for pr in node.parents:
-    #                print '{0}---{1}--{2}---{3}---{4}'.format(time_seq,node.identifier,pr.identifier,node.C,node.P)
+
+    # print kk
+    # #print t_graph.template_nodes
+    # for time_seq,list_at_time_seq in enumerate(t_graph.template_nodes):
+    #     for node in list_at_time_seq:
+    #         if len(node.parents)==0:
+    #             print '{0}---{1}--empty---{2}--{3}'.format(time_seq,node.identifier, node.C, node.P)
+    #         else:
+    #             for pr in node.parents:
+    #                 print '{0}---{1}--{2}---{3}---{4}'.format(time_seq,node.identifier,pr.identifier,node.C,node.P)
 
     tt=NO_OF_TIME_SEQ
-    last_frame=t_graph.template_nodes[NO_OF_TIME_SEQ - 1]#[-1]
-    curr_nod = last_frame[-1]
-    while curr_nod.identifier[3] != 0:
+    curr_nod=t_graph.template_nodes[NO_OF_TIME_SEQ - 1][-1]
+    while tt-1 >= 0:
         best_par=curr_nod.best_parent
-        print '{0}--->{1}---->{2}--->{3}--->{4}'.format( curr_nod.identifier[3],curr_nod.identifier,best_par.identifier,curr_nod.P,curr_nod.C)
+        print '{0}----{1}'.format(curr_nod.identifier,best_par.identifier)
+        if (result[-1] != curr_nod.identifier[1]): result = np.append(result, curr_nod.identifier[1])
         curr_nod=curr_nod.best_parent
         tt=tt-1
 
-    print '{0}--->{1}---->{2}---->{3}'.format(curr_nod.identifier[3],curr_nod.identifier,curr_nod.P,curr_nod.C)
+    result = np.delete(result, np.where(result == -1))[::-1]
+    print '\n\nYou Said -- > '
+    print result
 
 if __name__ == "__main__":
     main()
-
