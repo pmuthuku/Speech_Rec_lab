@@ -13,9 +13,9 @@ def do_DTW(HMM, trans_mat, data):
     for i in xrange(5):
         inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
-                                      #          'euclidean')
-                                                'mahalanobis',VI=inv_cov)
-        DTW_dist[i][:] = -(0.5*tmp_dist)-(0.5*np.log(np.prod(vars[i][:])))-(19.5*np.log(2*np.pi))
+                                               # 'euclidean')
+                                               'mahalanobis',VI=inv_cov)
+        DTW_dist[i][:] = -(0.5*tmp_dist)-(0.5*np.log(np.prod(vars[i][:])))#-(19.5*np.log(2*np.pi))
 
     np.savetxt('dist_file',DTW_dist)
                                               
@@ -96,11 +96,6 @@ def do_DTW(HMM, trans_mat, data):
 
 
 
-if len(sys.argv) <= 1:
-    print "Usage:\npython train_hmm.py digit"
-    print "Run in directory with MFCCs\n"
-    exit(0)
-
 def train_hmm(digit):
 
     data0 = np.loadtxt(digit+'_0.mfcc')
@@ -142,6 +137,7 @@ def train_hmm(digit):
 
     HMM[0][:] = np.mean(state1,axis=0)
     HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
+    # HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
 
 
 
@@ -153,7 +149,8 @@ def train_hmm(digit):
 
     HMM[2][:] = np.mean(state1,axis=0)
     HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
-    
+    # HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
+
 
 
     state1 = np.concatenate((data0[segs[0][1]:segs[0][2],:],
@@ -164,6 +161,7 @@ def train_hmm(digit):
 
     HMM[4][:] = np.mean(state1,axis=0)
     HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
+    # HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
 
@@ -175,7 +173,8 @@ def train_hmm(digit):
 
     HMM[6][:] = np.mean(state1,axis=0)
     HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
-    
+    # HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
+
 
 
     state1 = np.concatenate((data0[segs[0][3]:,:],
@@ -186,6 +185,7 @@ def train_hmm(digit):
 
     HMM[8][:] = np.mean(state1,axis=0)
     HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
+    # HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
     best_overall_cost = np.inf
     best_overall_segs = None
@@ -224,6 +224,7 @@ def train_hmm(digit):
 
         HMM[0][:] = np.mean(state1,axis=0)
         HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
+        # HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
 
 
 
@@ -235,7 +236,8 @@ def train_hmm(digit):
 
         HMM[2][:] = np.mean(state1,axis=0)
         HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
-    
+        # HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
+
 
 
         state1 = np.concatenate((data0[segs[0][1]-1:segs[0][2]+1,:],
@@ -246,6 +248,7 @@ def train_hmm(digit):
 
         HMM[4][:] = np.mean(state1,axis=0)
         HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
+        # HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
 
@@ -257,7 +260,8 @@ def train_hmm(digit):
 
         HMM[6][:] = np.mean(state1,axis=0)
         HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
-    
+        # HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
+
 
 
         state1 = np.concatenate((data0[segs[0][3]-1:,:],
@@ -268,6 +272,7 @@ def train_hmm(digit):
 
         HMM[8][:] = np.mean(state1,axis=0)
         HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
+        # HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
         # if avg_best_cost <= 5500:
 #             break

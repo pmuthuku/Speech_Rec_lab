@@ -9,7 +9,7 @@ NO_OF_HMM = 10
 NO_OF_STATES = 5
 
 #input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
-input_seq = np.loadtxt('new_recordings/anoop_1.mfcc')#.transpose()
+input_seq = np.loadtxt('new_recordings/anurag_1.mfcc')#.transpose()
 #input_seq = np.asarray(input_seq)
 #input_seq.shape
 NO_OF_TIME_SEQ = input_seq.shape[0]
@@ -17,27 +17,27 @@ NO_OF_TIME_SEQ = input_seq.shape[0]
 #pass
 
 
-trans_names = ['models/0.trans',
-               'models/1.trans',
-               'models/2.trans',
-               'models/3.trans',
-               'models/4.trans',
-               'models/5.trans',
-               'models/6.trans',
-               'models/7.trans',
-               'models/8.trans',
-               'models/9.trans'
+trans_names = ['models_new_2/0.trans',
+               'models_new_2/1.trans',
+               'models_new_2/2.trans',
+               'models_new_2/3.trans',
+               'models_new_2/4.trans',
+               'models_new_2/5.trans',
+               'models_new_2/6.trans',
+               'models_new_2/7.trans',
+               'models_new_2/8.trans',
+               'models_new_2/9.trans'
 ];
-hmm_names = ['models/0.hmm',
-             'models/1.hmm',
-             'models/2.hmm',
-             'models/3.hmm',
-             'models/4.hmm',
-             'models/5.hmm',
-             'models/6.hmm',
-             'models/7.hmm',
-             'models/8.hmm',
-             'models/9.hmm'
+hmm_names = ['models_new_2/0.hmm',
+             'models_new_2/1.hmm',
+             'models_new_2/2.hmm',
+             'models_new_2/3.hmm',
+             'models_new_2/4.hmm',
+             'models_new_2/5.hmm',
+             'models_new_2/6.hmm',
+             'models_new_2/7.hmm',
+             'models_new_2/8.hmm',
+             'models_new_2/9.hmm'
 ];
 
 mu_list = [np.zeros((NO_OF_STATES,39)) for x in range(NO_OF_HMM)]
@@ -65,7 +65,13 @@ for trns_idx, trans_file in enumerate(trans_names):
         #y=trans_list[trns_idx][j, j:min(j+3, NO_OF_STATES)]
         #y.shape
         #trans_list[trns_idx][j, j:min(j+3, NO_OF_STATES)] = np.delete(f[2+j, :], np.where(f[2+j, :] == np.inf), axis=0)
-        subst=f[2+j,np.where(f[2+j,:]!=np.inf)]
+        #subst=f[2+j,np.where(f[2+j,:]!=np.inf)]
+        if j > 2:
+            subst=f[2+j,0:5-j]
+        else:
+            subst=f[2+j,:]
+
+        # subst=f[2+j,np.where(f[2+j,:]!=np.inf)]
         trans[j, j:min(j+3, NO_OF_STATES)] = subst#np.delete(f[2+j, :], np.where(f[2+j, :] == np.inf), axis=0)
     #print trans
     trans_list[len(trans_list):]=[trans]
@@ -177,6 +183,7 @@ class template_node:
 
 def main():
     kk=0
+    result = np.array([-1])
     for t in range(0, NO_OF_TIME_SEQ):
         #print t
         st=time.time()
@@ -207,10 +214,15 @@ def main():
     while curr_nod.identifier[3] != 0:
         best_par=curr_nod.best_parent
         print '{0}--->{1}---->{2}--->{3}--->{4}'.format( curr_nod.identifier[3],curr_nod.identifier,best_par.identifier,curr_nod.P,curr_nod.C)
+        if (result[-1] != curr_nod.identifier[1]): result = np.append(result, curr_nod.identifier[1])
         curr_nod=curr_nod.best_parent
         tt=tt-1
 
     print '{0}--->{1}---->{2}---->{3}'.format(curr_nod.identifier[3],curr_nod.identifier,curr_nod.P,curr_nod.C)
+
+    result = np.delete(result, np.where(result == -1))[::-1]
+    print '\n\nYou Said -- > '
+    print result
 
 if __name__ == "__main__":
     main()
