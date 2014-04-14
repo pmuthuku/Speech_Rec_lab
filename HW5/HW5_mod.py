@@ -173,7 +173,6 @@ class graph:
         this_state = list(filter(lambda _: _.identifier[2] in state_no, this_hmm))
         return this_state
 
-t_graph = None
 
 def calculate_C(xn, mu, sigma):
     sigma_sqr = sigma # np.square(sigma)
@@ -214,7 +213,7 @@ def calculate_P(parents, identifier, C):
 
 class template_node:
 
-    def __init__(self, level_no, HMM_no, state_no, time=-1, non_emitting=False):
+    def __init__(self, level_no, HMM_no, state_no, time=-1, non_emitting=False, t_graph = None):
         if (time == 0):
             self.parents = []
         elif (level_no == 0 and non_emitting == True):
@@ -259,7 +258,6 @@ class template_node:
 
 
 def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
-    global t_graph
     t_graph = graph()
     global input_seq
 
@@ -280,12 +278,12 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
         #print t
         st=time.time()
         for i in range(0, NO_OF_LEVELS):
-            t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
+            t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True, t_graph=t_graph))
             for j in range(0, NO_OF_HMM):
                 for k in range(0, NO_OF_STATES):
-                    t_graph.add_node(template_node(i, j, k, time=t))
+                    t_graph.add_node(template_node(i, j, k, time=t, t_graph=t_graph))
                     kk=kk+1
-        t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True))
+        t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True, t_graph=t_graph))
         et=time.time()
         #print et-st
     # t_graph.find_node_by([0], [1], [0])
@@ -317,6 +315,8 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
     print result
     fp.write(file_name + '\n     Recognized as   -->     ' + str(result) + '\n     Correct Result  -->     '+correct_pronounce[file_number] + '\n')
     fp.close()
+    t_graph = None
+    del t_graph
 
 if __name__ == "__main__":
     fp = open(RUSULTS_FILE_NAME, 'w')
