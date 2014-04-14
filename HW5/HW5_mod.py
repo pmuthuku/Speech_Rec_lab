@@ -1,3 +1,4 @@
+import sys
 import time
 import copy
 import numpy as np
@@ -7,14 +8,14 @@ np.set_printoptions(threshold='nan', precision=3)
 
 
 MODEL_DIR_NAME = 'models_new_2'
-# MODEL_DIR_NAME = 'model_euclidean_withconst_cov'
-# MODEL_DIR_NAME = 'model_mahalanobis_withconst_cov'
-# MODEL_DIR_NAME = 'model_euclidean_withoutconst_cov'
+#MODEL_DIR_NAME = 'model_euclidean_withconst_cov'
+#MODEL_DIR_NAME = 'model_mahalanobis_withconst_cov'
+#MODEL_DIR_NAME = 'model_euclidean_withoutconst_cov'
 # MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_cov'
-# MODEL_DIR_NAME = 'model_euclidean_withconst_corrcoef'
+#MODEL_DIR_NAME = 'model_euclidean_withconst_corrcoef'
 # MODEL_DIR_NAME = 'model_mahalanobis_withconst_corrcoef'
-# MODEL_DIR_NAME = 'model_euclidean_withoutconst_corrcoef'
-# MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_ccorrcoef'
+#MODEL_DIR_NAME = 'model_euclidean_withoutconst_corrcoef'
+#MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_ccorrcoef'
 
 RUSULTS_FILE_NAME =  'RESULTS/' + MODEL_DIR_NAME + '.result'
 
@@ -42,10 +43,10 @@ audio_file_mfcc_list = [
         'ph_nos/4_1.mfcc',
         'ph_nos/4_2.mfcc',
         'ph_nos/4_3.mfcc',
-        'ph_nos/4_4.mfcc',
-        'ph_nos/4_5.mfcc',
-        'ph_nos/5_1.mfcc',
-        'ph_nos/5_2.mfcc',
+        'ph_nos/4_4.mfcc',#24
+        'ph_nos/4_5.mfcc',#
+        'ph_nos/5_1.mfcc',#26
+        'ph_nos/5_2.mfcc',#27
         'ph_nos/5_3.mfcc',
         'ph_nos/5_4.mfcc',
         'ph_nos/5_5.mfcc'
@@ -176,10 +177,10 @@ class graph:
 t_graph = None
 
 def calculate_C(xn, mu, sigma):
-    sigma_sqr = sigma # np.square(sigma)
-    # term1 = np.sum(np.log(sigma_sqr * 2 * np.math.pi)) * (-0.5)
-    # term2 = np.sum(np.divide(np.square(xn - mu), sigma_sqr)) * (-0.5)
-    # C = term1 + term2
+    #sigma_sqr = sigma # np.square(sigma)
+    #term1 = np.sum(np.log(sigma_sqr * 2 * np.math.pi)) * (-0.5)
+    #term2 = np.sum(np.divide(np.square(xn - mu), sigma_sqr)) * (-0.5)
+    #C = term1 + term2
     inv_cov = np.linalg.inv(np.diagflat(sigma))
     tmp_dist = scipy.spatial.distance.cdist(np.matrix(mu),np.matrix(xn),
                                       #          'euclidean')
@@ -275,7 +276,7 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
 
 
     kk=0
-    result = np.array([-1])
+    result = np.array([])
     for t in range(0, NO_OF_TIME_SEQ):
         #print t
         st=time.time()
@@ -305,22 +306,35 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
     curr_nod = last_frame[-1]
     while curr_nod.identifier[3] != 0:
         best_par=curr_nod.best_parent
-        # print '{0}--->{1}---->{2}--->{3}--->{4}'.format( curr_nod.identifier[3],curr_nod.identifier,best_par.identifier,curr_nod.P,curr_nod.C)
-        if (result[-1] != curr_nod.identifier[1]): result = np.append(result, curr_nod.identifier[1])
+        #print '{0}--->{1}---->{2}--->{3}--->{4}'.format( curr_nod.identifier[3],curr_nod.identifier,best_par.identifier,curr_nod.P,curr_nod.C)
+        #if (result[-1] != curr_nod.identifier[1]): result = np.append(result, curr_nod.identifier[1])
+        result = np.append(result, curr_nod.identifier[1])
         curr_nod=curr_nod.best_parent
         tt=tt-1
 
-    # print '{0}--->{1}---->{2}---->{3}'.format(curr_nod.identifier[3],curr_nod.identifier,curr_nod.P,curr_nod.C)
-
-    result = np.delete(result, np.where(result == -1))[::-1]
+    #print '{0}--->{1}---->{2}---->{3}'.format(curr_nod.identifier[3],curr_nod.identifier,curr_nod.P,curr_nod.C)
+    result = np.append(result, curr_nod.identifier[1])
+    resultid = np.where(result==-1)[0]
+    print np.shape(resultid)
+    resultid=resultid+1
+    result=result[resultid]
+    result=result[::-1]
+    result=map(int,result)
+    #result = np.delete(result, np.where(result == -1))[::-1]
     print '\n\nYou Said -- > '
     print result
+    print '\n Original - {0}'.format(correct_pronounce[file_number])
     fp.write(file_name + '\n     Recognized as   -->     ' + str(result) + '\n     Correct Result  -->     '+correct_pronounce[file_number] + '\n')
     fp.close()
 
 if __name__ == "__main__":
-    fp = open(RUSULTS_FILE_NAME, 'w')
-    fp.close()
+    #fp = open(RUSULTS_FILE_NAME, 'w')
+    #fp.close()
 
-    for audio_file_number, audio_file in enumerate(audio_file_mfcc_list):
-        main(audio_file, audio_file_number)
+    #for audio_file_number, audio_file in enumerate(audio_file_mfcc_list):
+    print "Running"
+    audio_file_number=int(sys.argv[1])
+    audio_file=sys.argv[2]
+    print audio_file_number
+    print audio_file
+    main(audio_file, audio_file_number)
