@@ -129,7 +129,8 @@ def train_hmm(mapped_symbs, filenm):
     # of data
 
     DTW_dist = scipy.spatial.distance.cdist(mean_matrix,data,
-                                                'euclidean')
+                                            'mahalanobis',
+                                            VI=np.eye(39))
 
     # Traverse DTW matrix and find shortest path -Anurag's code
     m,n = np.shape(DTW_dist)
@@ -146,28 +147,73 @@ def train_hmm(mapped_symbs, filenm):
     for j in range(2,n+1):
        for i in range(2,min(2+k,m+2)):
 
-           prev_parent = parent_matrix[j-1][1]
-           pp_parent = parent_matrix[j-1][0]
+           prev_parent = parent_matrix[i-2][1]
+           pp_parent = parent_matrix[i-2][0]
 
-           if prev_parent = -2:
+           if prev_parent == -2:
                # Parent is non-emitting state
-               costs = np.array([dcost[
+               # Double check if this is sum or product
+               costs = np.array([dcost[i,j-1]
+                                 +hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
+                                 dcost[i-1,j-1]])
+               
+           elif pp_parent == -1:
+               costs = np.array([dcost[i,j-1]
+                                 + hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
+                                 dcost[i-1,j-1]
+                                 + hmms[int(hmm_state_mat[i-3][0])].states[int(hmm_state_mat[i-3][1])].next_trans])
+               
+           else:
+               costs = np.array([dcost[i,j-1]
+                                 + hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
+                                 dcost[i-1,j-1]
+                                 + hmms[int(hmm_state_mat[i-3][0])].states[int(hmm_state_mat[i-3][1])].next_trans,
+                                 dcost[i-2,j-1]
+                                 + hmms[int(hmm_state_mat[i-4][0])].states[int(hmm_state_mat[i-4][1])].next_next_trans ])
+               
 
            
-           costs = np.array([dcost[i,j-1]+trans_mat[i][0], #same state
-                            dcost[i-1,j-1]+trans_mat[i-1][1],#prev state
-                            dcost[i-2,j-1]+trans_mat[i-2][2]])#prev-prev-state
+#            costs = np.array([dcost[i,j-1]+trans_mat[i][0], #same state
+#                             dcost[i-1,j-1]+trans_mat[i-1][1],#prev state
+#                            dcost[i-2,j-1]+trans_mat[i-2][2]])#prev-prev-state
            dcost[i,j] = np.min(costs) +DTW_dist[i-2,j-1]
            tmp_ptr = np.argmin(costs)
 
            if tmp_ptr == 0:
                DTW_bptr[i,j] = i
            elif tmp_ptr == 1:
-               DTW_bptr[i,j] = i-1
+               DTW_bptr[i,j] = prev_parent
+               if prev_parent == -2:
+                   DTW_bptr[i,j] = i-1
            else:
-               DTW_bptr[i,j] = i-2
+               DTW_bptr[i,j] = pp_parent
        k=k+2
 
+    # Segmentations: (No of HMMS * number of states)-1 cuts
+    segs = np.zeros([(len(hmms)*hmms[0].num_states)-1,1])
+       
+    # Backtracking
+    j = n
+    btrace = np.zeros((n+1,))
+    trans_count = np.zeros((len(hmms)*hmms[0].num_states,
+                            len(hmms)*hmms[0].num_states))
+
+    prev = m + 1
+    current = m + 1
+
+    btrace[0] = 2
+    btrace[1] = 2
+    while j >= 2:
+        btrace[j] = prev
+        current = DTW_bptr[prev][j]
+        j = j - 1
+        trans_count[current-2,prev-2] = trans_count[current-2,prev-2] + 1
+        prev = current
+        
+    btrace = btrace -2
+
+    binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
+    
 
     
 
