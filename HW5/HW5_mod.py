@@ -4,6 +4,54 @@ import numpy as np
 import scipy.spatial.distance
 np.set_printoptions(threshold='nan', precision=3)
 
+
+
+MODEL_DIR_NAME = 'models_new_2'
+# MODEL_DIR_NAME = 'model_euclidean_withconst_cov'
+# MODEL_DIR_NAME = 'model_mahalanobis_withconst_cov'
+# MODEL_DIR_NAME = 'model_euclidean_withoutconst_cov'
+# MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_cov'
+# MODEL_DIR_NAME = 'model_euclidean_withconst_corrcoef'
+# MODEL_DIR_NAME = 'model_mahalanobis_withconst_corrcoef'
+# MODEL_DIR_NAME = 'model_euclidean_withoutconst_corrcoef'
+# MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_ccorrcoef'
+
+RUSULTS_FILE_NAME =  MODEL_DIR_NAME + '.result'
+
+audio_file_mfcc = [
+        'ph_nos/0_1.mfcc',
+        'ph_nos/0_2.mfcc',
+        'ph_nos/0_3.mfcc',
+        'ph_nos/0_4.mfcc',
+        'ph_nos/0_5.mfcc',
+        'ph_nos/1_1.mfcc',
+        'ph_nos/1_2.mfcc',
+        'ph_nos/1_3.mfcc',
+        'ph_nos/1_4.mfcc',
+        'ph_nos/1_5.mfcc',
+        'ph_nos/2_1.mfcc',
+        'ph_nos/2_2.mfcc',
+        'ph_nos/2_3.mfcc',
+        'ph_nos/2_4.mfcc',
+        'ph_nos/2_5.mfcc',
+        'ph_nos/3_1.mfcc',
+        'ph_nos/3_2.mfcc',
+        'ph_nos/3_3.mfcc',
+        'ph_nos/3_4.mfcc',
+        'ph_nos/3_5.mfcc',
+        'ph_nos/4_1.mfcc',
+        'ph_nos/4_2.mfcc',
+        'ph_nos/4_3.mfcc',
+        'ph_nos/4_4.mfcc',
+        'ph_nos/4_5.mfcc',
+        'ph_nos/5_1.mfcc',
+        'ph_nos/5_2.mfcc',
+        'ph_nos/5_3.mfcc',
+        'ph_nos/5_4.mfcc',
+        'ph_nos/5_5.mfcc'
+]
+
+
 #NO_OF_TIME_SEQ = 3
 NO_OF_LEVELS = 10
 NO_OF_HMM = 10
@@ -18,27 +66,27 @@ NO_OF_TIME_SEQ = input_seq.shape[0]
 #pass
 
 
-trans_names = ['models_new_2/0.trans',
-               'models_new_2/1.trans',
-               'models_new_2/2.trans',
-               'models_new_2/3.trans',
-               'models_new_2/4.trans',
-               'models_new_2/5.trans',
-               'models_new_2/6.trans',
-               'models_new_2/7.trans',
-               'models_new_2/8.trans',
-               'models_new_2/9.trans'
+trans_names = [MODEL_DIR_NAME + '/0.trans',
+               MODEL_DIR_NAME + '/1.trans',
+               MODEL_DIR_NAME + '/2.trans',
+               MODEL_DIR_NAME + '/3.trans',
+               MODEL_DIR_NAME + '/4.trans',
+               MODEL_DIR_NAME + '/5.trans',
+               MODEL_DIR_NAME + '/6.trans',
+               MODEL_DIR_NAME + '/7.trans',
+               MODEL_DIR_NAME + '/8.trans',
+               MODEL_DIR_NAME + '/9.trans'
 ];
-hmm_names = ['models_new_2/0.hmm',
-             'models_new_2/1.hmm',
-             'models_new_2/2.hmm',
-             'models_new_2/3.hmm',
-             'models_new_2/4.hmm',
-             'models_new_2/5.hmm',
-             'models_new_2/6.hmm',
-             'models_new_2/7.hmm',
-             'models_new_2/8.hmm',
-             'models_new_2/9.hmm'
+hmm_names = [MODEL_DIR_NAME + '/0.hmm',
+             MODEL_DIR_NAME + '/1.hmm',
+             MODEL_DIR_NAME + '/2.hmm',
+             MODEL_DIR_NAME + '/3.hmm',
+             MODEL_DIR_NAME + '/4.hmm',
+             MODEL_DIR_NAME + '/5.hmm',
+             MODEL_DIR_NAME + '/6.hmm',
+             MODEL_DIR_NAME + '/7.hmm',
+             MODEL_DIR_NAME + '/8.hmm',
+             MODEL_DIR_NAME + '/9.hmm'
 ];
 
 mu_list = [np.zeros((NO_OF_STATES,39)) for x in range(NO_OF_HMM)]
