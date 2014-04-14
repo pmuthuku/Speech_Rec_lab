@@ -53,14 +53,14 @@ class hmm:
         # Read in transition probabilities
         trans_prob = np.loadtxt('models/'+symbol+'.trans')
 
-        num_states = 5
+        self.num_states = 5
 
         self.states=[]
 
-        for i in xrange(num_states + 2): # The plus two is for non-emitting states
+        for i in xrange(1, self.num_states + 2): # The plus two is for non-emitting states
             # Non-emitting states first
             j=0
-            if i < 2:
+            if i == 1 :
                 self.states.append(state(means=0, vars=0, self_trans=trans_prob[i][0],
                                    next_trans=trans_prob[i][1], 
                                    next_next_trans=trans_prob[i][2],non_emitting=True))
@@ -70,6 +70,7 @@ class hmm:
                                    self_trans=trans_prob[i][0],
                                    next_trans=trans_prob[i][1],
                                    next_next_trans=trans_prob[i][2]))
+                j = j + 2
 
         pass
             
@@ -77,16 +78,56 @@ class hmm:
 
 def train_hmm(mapped_symbs, filenm):
     
-    first_symb=mapped_symbs[0]
-    hmm1 = hmm(symbol=first_symb)
+    hmms=[]
+    
+    # Create HMM 
+    for i in xrange(len(mapped_symbs)):
+        hmms.append(hmm(symbol=mapped_symbs[i]))
 
+
+    # Read in filenm
+    data = np.loadtxt(filenm)
+
+
+    # Create Matrix with means for cdist
+    # Let's ignore the variances since they are all 1 anyway
+    mean_matrix = np.zeros([len(hmms)*hmms[0].num_states,39])
+    
+    # prev-prev-pointer, prev-pointer
+    # pointer 0 means prev is non-emitting state
+    # pointer -1 means no parent
+    parent_matrix = np.ones([len(hmms)*hmms[0].num_states,2])*-1
+    
+
+    k = 0
+    for i in xrange(len(hmms)):
+        
+        for j in xrange(1,hmms[i].num_states+1):
+            
+            mean_matrix[k,:] = hmms[i].states[j].means
+            
+            if j == 1:
+                parent_matrix[k,:] = [-1, 0]
+            elif j == 2:
+                parent_matrix[k,:] = [-1, 1]
+            else:
+                parent_matrix[k,:] = [j-2,j-1]
+
+            k = k + 1
+            
+    
+    # Compute Euclidean distance between the means and the frames
+    # of data
+
+    DTW_dist_mat = scipy.spatial.distance.cdist(mean_matrix,data,
+                                                'euclidean')
+
+    #################### HERE ###################################
     pass
 
-def train_cont_hmms(transcrps, dirname):
-    
-    print "transcrps ",transcrps
-    print "dirname ",dirname
 
+
+def train_cont_hmms(transcrps, dirname):
     
     with open(transcrps) as f:
         trans = f.readlines()
@@ -102,9 +143,9 @@ def train_cont_hmms(transcrps, dirname):
     for i in xrange(len(trans)):
         # Clean up names
         mapped_symbs,filenm = cleanup_names(trans[i])
-
+        fullname = dirname + '/' + filenm + '.mfcc'
         # Put models together and train
-        train_hmm(mapped_symbs, filenm)
+        train_hmm(mapped_symbs, fullname)
         
 
     pass
