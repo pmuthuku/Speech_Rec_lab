@@ -94,9 +94,16 @@ def train_hmm(mapped_symbs, filenm):
     mean_matrix = np.zeros([len(hmms)*hmms[0].num_states,39])
     
     # prev-prev-pointer, prev-pointer
-    # pointer 0 means prev is non-emitting state
+    # pointer -2 means prev is non-emitting state
     # pointer -1 means no parent
     parent_matrix = np.ones([len(hmms)*hmms[0].num_states,2])*-1
+
+    # HMM/state matrix
+    # First column specifies the HMM number. 
+    # Second column refers to the state of that HMM
+    # [4,1] means hmms[4].states[1]
+    # This is just for rapidly indexing the HMM and state
+    hmm_state_mat = np.ones([len(hmms)*hmms[0].num_states,2])*-1
     
 
     k = 0
@@ -107,11 +114,13 @@ def train_hmm(mapped_symbs, filenm):
             mean_matrix[k,:] = hmms[i].states[j].means
             
             if j == 1:
-                parent_matrix[k,:] = [-1, 0]
+                parent_matrix[k,:] = [-1, -2]
             elif j == 2:
-                parent_matrix[k,:] = [-1, 1]
+                parent_matrix[k,:] = [-1, k-1]
             else:
-                parent_matrix[k,:] = [j-2,j-1]
+                parent_matrix[k,:] = [k-2,k-1]
+            
+            hmm_state_mat[k,:] = [i,j]
 
             k = k + 1
             
@@ -119,10 +128,49 @@ def train_hmm(mapped_symbs, filenm):
     # Compute Euclidean distance between the means and the frames
     # of data
 
-    DTW_dist_mat = scipy.spatial.distance.cdist(mean_matrix,data,
+    DTW_dist = scipy.spatial.distance.cdist(mean_matrix,data,
                                                 'euclidean')
 
-    #################### HERE ###################################
+    # Traverse DTW matrix and find shortest path -Anurag's code
+    m,n = np.shape(DTW_dist)
+    dcost = np.ones((m+2,n+1))
+    dcost = dcost + np.inf
+
+    DTW_bptr = np.zeros((m+2,n+1))
+    DTW_bptr = DTW_bptr + np.inf
+    
+
+    dcost[2,1] = DTW_dist[0,0]
+
+    k=3
+    for j in range(2,n+1):
+       for i in range(2,min(2+k,m+2)):
+
+           prev_parent = parent_matrix[j-1][1]
+           pp_parent = parent_matrix[j-1][0]
+
+           if prev_parent = -2:
+               # Parent is non-emitting state
+               costs = np.array([dcost[
+
+           
+           costs = np.array([dcost[i,j-1]+trans_mat[i][0], #same state
+                            dcost[i-1,j-1]+trans_mat[i-1][1],#prev state
+                            dcost[i-2,j-1]+trans_mat[i-2][2]])#prev-prev-state
+           dcost[i,j] = np.min(costs) +DTW_dist[i-2,j-1]
+           tmp_ptr = np.argmin(costs)
+
+           if tmp_ptr == 0:
+               DTW_bptr[i,j] = i
+           elif tmp_ptr == 1:
+               DTW_bptr[i,j] = i-1
+           else:
+               DTW_bptr[i,j] = i-2
+       k=k+2
+
+
+    
+
     pass
 
 
