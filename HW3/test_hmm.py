@@ -14,7 +14,7 @@ def do_DTW(HMM, trans_mat, data):
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
                                       #          'euclidean')
                                                 'mahalanobis',VI=inv_cov)
-        DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
+        DTW_dist[i][:] = -(0.5*tmp_dist) - (0.5*np.log(np.prod(vars[i][:]))) #+ 19.5*np.log(2*np.pi)
 
     np.savetxt('dist_file',DTW_dist)
                                               
