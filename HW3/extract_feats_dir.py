@@ -5,6 +5,7 @@ import scipy.fftpack
 import struct
 import math
 import os
+from sklearn import preprocessing
 
 if len(sys.argv) < 2:
     print("Extracts MFCCs from a wav files in a directory.\nUsage: %s dir" % sys.argv[0])
@@ -145,5 +146,8 @@ for i in xrange(len(file_list)):
     mel_cep_delta_deltas = mel_cep_shift - mel_cep_deltas
     all_feats = numpy.append(all_feats, mel_cep_delta_deltas, axis=1)
 
+    # Cepstral Mean and Variance Normalization
+    all_feats_norm = preprocessing.scale(all_feats)
+
     outfile = dir_name + '/' + os.path.splitext(file_list[i])[0] + '.mfcc'
-    numpy.savetxt(outfile, all_feats)
+    numpy.savetxt(outfile, all_feats_norm)

@@ -4,6 +4,7 @@ import numpy
 import scipy.fftpack
 import struct
 import math
+from sklearn import preprocessing
 
 if len(sys.argv) < 2:
     print("Extracts MFCCs from a wave file.\nUsage: %s filename.wav\n" % sys.argv[0])
@@ -139,6 +140,8 @@ mel_cep_shift = numpy.append(mel_cep_shift, blanks, axis=0)
 mel_cep_delta_deltas = mel_cep_shift - mel_cep_deltas
 all_feats = numpy.append(all_feats, mel_cep_delta_deltas, axis=1)
 
+# Cepstral Mean and Variance Normalization                                         
+all_feats_norm = preprocessing.scale(all_feats)
 
 
-numpy.savetxt('mel_cep.data', all_feats)
+numpy.savetxt('mel_cep.data', all_feats_norm)
