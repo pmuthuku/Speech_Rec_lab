@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import scipy.spatial.distance
 
+
 def do_DTW(HMM, trans_mat, data):
     means = HMM[::2,:]
     vars = HMM[1::2,:]
@@ -85,7 +86,9 @@ def do_DTW(HMM, trans_mat, data):
                               axis=0)
 
     tr_count = tr_count + 0.0001 #Avoiding infinity errors
-    tr_count = tr_count/np.sum(tr_count)
+    tr_sum = np.sum(tr_count,axis=1)
+    tr_count = np.transpose(np.transpose(tr_count)/tr_sum)
+    #tr_count = tr_count/np.sum(tr_count)
     tr_count = np.log(tr_count)
 
 
@@ -105,6 +108,7 @@ def train_hmm(digit):
     data4 = np.loadtxt(digit+'_4.mfcc')
 
     segs = np.ones((5,4)) * np.array([0.2,0.4,0.6,0.8])
+    print segs
     segs = np.array([[data0.shape[0]],
                      [data1.shape[0]],
                      [data2.shape[0]],
@@ -136,7 +140,7 @@ def train_hmm(digit):
                              data4[:segs[4][0],:]),axis=0)
 
     HMM[0][:] = np.mean(state1,axis=0)
-    HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
+    HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
     # HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -148,7 +152,7 @@ def train_hmm(digit):
                              data4[segs[4][0]:segs[4][1],:]),axis=0)
 
     HMM[2][:] = np.mean(state1,axis=0)
-    HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
+    HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
     # HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -160,7 +164,7 @@ def train_hmm(digit):
                              data4[segs[4][1]:segs[4][2],:]),axis=0)
 
     HMM[4][:] = np.mean(state1,axis=0)
-    HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
+    HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
     # HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -172,7 +176,7 @@ def train_hmm(digit):
                              data4[segs[4][2]:segs[4][3],:]),axis=0)
 
     HMM[6][:] = np.mean(state1,axis=0)
-    HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
+    HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
     # HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -184,7 +188,7 @@ def train_hmm(digit):
                              data4[segs[4][3]:,:]),axis=0)
 
     HMM[8][:] = np.mean(state1,axis=0)
-    HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
+    HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
     # HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
     best_overall_cost = np.inf
@@ -223,7 +227,7 @@ def train_hmm(digit):
                                  data4[:segs[4][0]+1,:]),axis=0)
 
         HMM[0][:] = np.mean(state1,axis=0)
-        HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
+        HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
         # HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -235,7 +239,7 @@ def train_hmm(digit):
                                  data4[segs[4][0]-1:segs[4][1]+1,:]),axis=0)
 
         HMM[2][:] = np.mean(state1,axis=0)
-        HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
+        HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
         # HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -247,7 +251,7 @@ def train_hmm(digit):
                                  data4[segs[4][1]-1:segs[4][2]+1,:]),axis=0)
 
         HMM[4][:] = np.mean(state1,axis=0)
-        HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
+        HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
         # HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -259,7 +263,7 @@ def train_hmm(digit):
                                  data4[segs[4][2]-1:segs[4][3]+1,:]),axis=0)
 
         HMM[6][:] = np.mean(state1,axis=0)
-        HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
+        HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
         # HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
 
 
@@ -271,7 +275,7 @@ def train_hmm(digit):
                                  data4[segs[4][3]-1:,:]),axis=0)
 
         HMM[8][:] = np.mean(state1,axis=0)
-        HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
+        HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
         # HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
 
         # if avg_best_cost <= 5500:
