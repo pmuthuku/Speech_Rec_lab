@@ -87,7 +87,7 @@ def do_DTW(HMM, trans_mat, data):
 
     tr_count = tr_count + 0.0001 #Avoiding infinity errors
     tr_sum = np.sum(tr_count,axis=1)
-    tr_count = np.transpose(np.transpose(tr_count)/tr_sum)
+    tr_count = tr_count/tr_sum
     #tr_count = tr_count/np.sum(tr_count)
     tr_count = np.log(tr_count)
 
