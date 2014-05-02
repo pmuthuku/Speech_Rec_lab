@@ -35,7 +35,7 @@ for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
     nums = array.array('h',data)
     left = numpy.array(nums[1::2])
     energy = 10*numpy.log(numpy.sum(numpy.power(left,2)))
-    #print(energy)
+    print(energy)
 
     if (energy < threshold):
         num_sil_frames = num_sil_frames + 1

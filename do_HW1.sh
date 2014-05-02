@@ -13,8 +13,8 @@ python test_play.py right_output.wav
 python extract_feats.py right_output.wav
 
 # Plot and display images
-/Applications/Matlab/MATLAB_R2012a.app/bin/matlab -nodisplay -nosplash < plotter.m
-open Mag_spec.eps &
-open Mel_spec.eps &
-open Mel_log_spec.eps &
+#/Applications/Matlab/MATLAB_R2012a.app/bin/matlab -nodisplay -nosplash < plotter.m
+#open Mag_spec.eps &
+#open Mel_spec.eps &
+#open Mel_log_spec.eps &
 

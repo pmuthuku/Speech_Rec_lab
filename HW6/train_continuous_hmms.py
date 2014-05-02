@@ -232,7 +232,6 @@ def train_cont_hmms(transcrps, dirname):
         trans[i] = trans[i].split()
         trans[i][-1] = trans[i][-1].replace('(','').replace(')','')
 
-
     # Read each line of the transcript, compose model and train
     for i in xrange(len(trans)):
         # Clean up names
@@ -240,13 +239,6 @@ def train_cont_hmms(transcrps, dirname):
         fullname = dirname + '/' + filenm + '.mfcc'
         # Put models together and train
         train_hmm(mapped_symbs, fullname)
-        
-
-    pass
-
-    
-    
-
 
 if len(sys.argv) <=2:
     print "Usage:\npython train_continuous_hmms.py TRANSCRIPs DIR"
