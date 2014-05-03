@@ -208,7 +208,7 @@ class template_node:
         elif (level_no == 0 and non_emitting == True):
             self.parents = []
         elif (non_emitting == True):
-            self.parents = t_graph.find_node_by([level_no - 1], range(NO_OF_HMM), [NO_OF_STATES - 1], time_seq=time)
+            self.parents = t_graph.find_node_by([level_no - 1], range(NO_OF_HMM+1), [NO_OF_STATES - 1], time_seq=time)
         elif(state_no == 0 and HMM_no == 10):
             self.parents = t_graph.find_node_by([level_no],range(HMM_no+1), [NO_OF_STATES-1], time_seq=time-1 )
         elif (state_no == 0):
