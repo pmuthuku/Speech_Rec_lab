@@ -3,6 +3,8 @@ import numpy as np
 import scipy.spatial.distance
 
 
+DIRNAME = 'models_a/'
+
 words2num = {'zero':'0',
              'oh' : 'o',
              'one': '1',
@@ -233,6 +235,175 @@ class template_node:
 
 t_graph = None
 
+def do_DTW(HMM, trans_mat, data):
+    means = HMM[::2,:]
+    varia = HMM[1::2,:]
+
+    #varia = varia+ 0.001
+
+    DTW_dist = np.zeros((5,data.shape[0]))
+
+    for i in xrange(5):
+        inv_cov = np.linalg.inv(np.diagflat(varia[i][:]))
+        tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
+                                      #          'euclidean')
+                                                'mahalanobis',VI=inv_cov)
+        DTW_dist[i][:] = 0.5*tmp_dist+0.5*np.log(np.prod(varia[i][:]))+19.5*np.log(2*np.pi)
+
+    np.savetxt('dist_file',DTW_dist)
+
+
+    # Do actual DTW: Anurag's code
+    m,n = np.shape(DTW_dist)
+    #print m
+    #print n
+    dcost = np.ones((m+2,n+1))
+    dcost = dcost + np.inf
+
+    DTW_bptr = np.zeros((m+2,n+1))
+    DTW_bptr = DTW_bptr + np.inf
+
+
+    dcost[2,1] = DTW_dist[0,0]
+
+    k=3
+    for j in range(2,n+1):
+       for i in range(2,min(2+k,m+2)):
+           costs = np.array([dcost[i,j-1]+trans_mat[i][0],
+                            dcost[i-1,j-1]+trans_mat[i-1][1],
+                            dcost[i-2,j-1]+trans_mat[i-2][2]])
+           dcost[i,j] = np.min(costs) +DTW_dist[i-2,j-1]
+           tmp_ptr = np.argmin(costs)
+
+           if tmp_ptr == 0:
+               DTW_bptr[i,j] = i
+           elif tmp_ptr == 1:
+               DTW_bptr[i,j] = i-1
+           else:
+               DTW_bptr[i,j] = i-2
+       k=k+2
+
+    np.savetxt('bptr_file',DTW_bptr)
+
+    seg = np.zeros((4,1)) # 4 cuts
+
+    prev=6.0
+    current=6.0
+    j = n
+    btrace = np.zeros((n+1,))
+    trans_count = np.zeros((5,5))
+
+    btrace[0] = 2
+    btrace[1] = 2
+    while j >= 2:
+        btrace[j] = prev
+        current = DTW_bptr[prev][j]
+        j = j - 1
+        trans_count[current-2,prev-2] = trans_count[current-2,prev-2] + 1
+        prev = current
+
+    btrace = btrace -2
+    #print btrace
+    #binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
+    binct = np.bincount(btrace.astype(int))
+    #print binct
+    prev=0
+    for j in xrange(4): #Last cut does not matter
+            seg[j] = binct[j] + prev
+            prev = seg[j]
+
+    tr_count = np.concatenate((np.matrix(trans_count[0,:3]),
+                               np.matrix(trans_count[1,1:4]),
+                               np.matrix(trans_count[2,2:5]),
+                               np.matrix(np.append(trans_count[3,3:],0)),
+                               np.matrix(np.append(np.append(trans_count[4,4],0),0))),
+                              axis=0)
+
+    tr_count = tr_count + 0.0001 #Avoiding infinity errors
+    tr_sum = np.sum(tr_count,axis=1)
+    tr_count = tr_count/tr_sum
+    #tr_count = tr_count/np.sum(tr_count)
+    tr_count = -np.log(tr_count)
+
+
+    best_cost = dcost[dcost.shape[0]-1,
+                      dcost.shape[1]-1]
+
+    return seg, tr_count, best_cost
+
+def train_hmm_isol(digit, data):
+
+    data0 = data
+
+    segs = np.ones((1,4)) * np.array([0.2,0.4,0.6,0.8])
+    segs = np.array([[data0.shape[0]]]) * segs
+
+
+    print segs
+    # HMM: Our HMM will be a numpy matrix 10 x 39
+    # because 5 states and one row for mean and one row for variance
+
+    # lOAD THIS FROM FILE
+    HMM = np.loadtxt(DIRNAME + digit+'.hmm')
+    trans_mat = np.loadtxt(DIRNAME+digit+'.trans')
+
+    for i in xrange(30):
+
+        # Do DTW between HMM and data sequence
+        new_segs0, new_tr0, best_cost0 = do_DTW(HMM,trans_mat,data0)
+
+        avg_best_cost = 0.20 * (best_cost0)
+
+        print 'Iteration',i,' cost: ',avg_best_cost
+        # Update rules
+
+        segs = np.concatenate((new_segs0.transpose()), axis=0)
+
+        trans_mat[2:,:] =  0.20* (new_tr0)
+
+        # Extract appropriate sections for each state
+        state1 = np.concatenate((data0[:segs[0]+1,:]),axis=0)
+
+        HMM[0][:] = np.mean(state1,axis=0)
+        HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[0]-1:segs[1]+1,:]),axis=0)
+
+        HMM[2][:] = np.mean(state1,axis=0)
+        HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[1]-1:segs[2]+1,:]),axis=0)
+
+        HMM[4][:] = np.mean(state1,axis=0)
+        HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[2]-1:segs[3]+1,:]),axis=0)
+
+        HMM[6][:] = np.mean(state1,axis=0)
+        HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
+
+
+
+        state1 = np.concatenate((data0[segs[3]:,:]),axis=0)
+        #print state1.shape
+        HMM[8][:] = np.mean(state1,axis=0)
+        HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
+
+
+    filnm = DIRNAME+digit+'.hmm'
+    np.savetxt(filnm,HMM)
+    filnm = DIRNAME+digit+'.trans'
+    np.savetxt(filnm,trans_mat)
+
+    pass
+
+
 
 def train_hmm(mapped_symbs, filenm):
 
@@ -269,136 +440,15 @@ def train_hmm(mapped_symbs, filenm):
 
     boundary = np.where(result == -1)[0]
     boundary = np.append(boundary, -1)
-    print result, boundary
 
     segment_list = []
     for i in range(len(mapped_symbs)):
         segment = data[boundary[i]:boundary[i+1], :]
         segment_list.append(segment)
-    # Create Matrix with means for cdist
-    # Let's ignore the variances since they are all 1 anyway
-    mean_matrix = np.zeros([len(hmms)*hmms[0].num_states,39])
-    
-    # prev-prev-pointer, prev-pointer
-    # pointer -2 means prev is non-emitting state
-    # pointer -1 means no parent
-    parent_matrix = np.ones([len(hmms)*hmms[0].num_states,2])*-1
+    for i in range(len(mapped_symbs)):
+        train_hmm_isol(mapped_symbs[i], segment_list[i])
+    # print segment_list
 
-    # HMM/state matrix
-    # First column specifies the HMM number. 
-    # Second column refers to the state of that HMM
-    # [4,1] means hmms[4].states[1]
-    # This is just for rapidly indexing the HMM and state
-    hmm_state_mat = np.ones([len(hmms)*hmms[0].num_states,2])*-1
-    
-
-    k = 0
-    for i in xrange(len(hmms)):
-        
-        for j in xrange(1,hmms[i].num_states+1):
-            
-            mean_matrix[k,:] = hmms[i].states[j].means
-            
-            if j == 1:
-                parent_matrix[k,:] = [-1, -2]
-            elif j == 2:
-                parent_matrix[k,:] = [-1, k-1]
-            else:
-                parent_matrix[k,:] = [k-2,k-1]
-            
-            hmm_state_mat[k,:] = [i,j]
-
-            k = k + 1
-            
-    
-    # Compute Euclidean distance between the means and the frames
-    # of data
-
-    DTW_dist = scipy.spatial.distance.cdist(mean_matrix,data,
-                                            'mahalanobis',
-                                            VI=np.eye(39))
-
-    # Traverse DTW matrix and find shortest path -Anurag's code
-    m,n = np.shape(DTW_dist)
-    dcost = np.ones((m+2,n+1))
-    dcost = dcost + np.inf
-
-    DTW_bptr = np.zeros((m+2,n+1))
-    DTW_bptr = DTW_bptr + np.inf
-    
-
-    dcost[2,1] = DTW_dist[0,0]
-
-    k=3
-    for j in range(2,n+1):
-       for i in range(2,min(2+k,m+2)):
-
-           prev_parent = parent_matrix[i-2][1]
-           pp_parent = parent_matrix[i-2][0]
-
-           if prev_parent == -2:
-               # Parent is non-emitting state
-               # Double check if this is sum or product
-               costs = np.array([dcost[i,j-1]
-                                 +hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
-                                 dcost[i-1,j-1]])
-               
-           elif pp_parent == -1:
-               costs = np.array([dcost[i,j-1]
-                                 + hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
-                                 dcost[i-1,j-1]
-                                 + hmms[int(hmm_state_mat[i-3][0])].states[int(hmm_state_mat[i-3][1])].next_trans])
-               
-           else:
-               costs = np.array([dcost[i,j-1]
-                                 + hmms[int(hmm_state_mat[i-2][0])].states[int(hmm_state_mat[i-2][1])].self_trans,
-                                 dcost[i-1,j-1]
-                                 + hmms[int(hmm_state_mat[i-3][0])].states[int(hmm_state_mat[i-3][1])].next_trans,
-                                 dcost[i-2,j-1]
-                                 + hmms[int(hmm_state_mat[i-4][0])].states[int(hmm_state_mat[i-4][1])].next_next_trans ])
-               
-
-           
-#            costs = np.array([dcost[i,j-1]+trans_mat[i][0], #same state
-#                             dcost[i-1,j-1]+trans_mat[i-1][1],#prev state
-#                            dcost[i-2,j-1]+trans_mat[i-2][2]])#prev-prev-state
-           dcost[i,j] = np.min(costs) +DTW_dist[i-2,j-1]
-           tmp_ptr = np.argmin(costs)
-
-           if tmp_ptr == 0:
-               DTW_bptr[i,j] = i
-           elif tmp_ptr == 1:
-               DTW_bptr[i,j] = prev_parent
-               if prev_parent == -2:
-                   DTW_bptr[i,j] = i-1
-           else:
-               DTW_bptr[i,j] = pp_parent
-       k=k+2
-
-    # Segmentations: (No of HMMS * number of states)-1 cuts
-    segs = np.zeros([(len(hmms)*hmms[0].num_states)-1,1])
-       
-    # Backtracking
-    j = n
-    btrace = np.zeros((n+1,))
-    trans_count = np.zeros((len(hmms)*hmms[0].num_states,
-                            len(hmms)*hmms[0].num_states))
-
-    prev = m + 1
-    current = m + 1
-
-    btrace[0] = 2
-    btrace[1] = 2
-    while j >= 2:
-        btrace[j] = prev
-        current = DTW_bptr[prev][j]
-        j = j - 1
-        trans_count[current-2,prev-2] = trans_count[current-2,prev-2] + 1
-        prev = current
-        
-    btrace = btrace -2
-
-    binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
 
 def train_cont_hmms(transcrps, dirname):
     
