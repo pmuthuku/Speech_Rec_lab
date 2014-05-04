@@ -4,24 +4,26 @@ import scipy.spatial.distance
 
 def do_DTW(HMM, trans_mat, data):
     means = HMM[::2,:]
-    vars = HMM[1::2,:]
+    varia = HMM[1::2,:]
 
-    #vars = vars+ 0.001
+    #varia = varia+ 0.001
 
     DTW_dist = np.zeros((5,data.shape[0]))
     
     for i in xrange(5):
-        inv_cov = np.linalg.inv(np.diagflat(vars[i][:]))
+        inv_cov = np.linalg.inv(np.diagflat(varia[i][:]))
         tmp_dist = scipy.spatial.distance.cdist(np.matrix(means[i][:]),data,
                                       #          'euclidean')
                                                 'mahalanobis',VI=inv_cov)
-        DTW_dist[i][:] = 0.5*tmp_dist + 0.5*np.log(np.prod(vars[i][:])) #+ 19.5*np.log(2*np.pi)
+        DTW_dist[i][:] = 0.5*tmp_dist+0.5*np.log(np.prod(varia[i][:]))+19.5*np.log(2*np.pi)
 
     np.savetxt('dist_file',DTW_dist)
                                               
 
     # Do actual DTW: Anurag's code
     m,n = np.shape(DTW_dist)
+    #print m
+    #print n
     dcost = np.ones((m+2,n+1)) 
     dcost = dcost + np.inf
 
@@ -68,10 +70,10 @@ def do_DTW(HMM, trans_mat, data):
         prev = current
         
     btrace = btrace -2
-
-    binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
-
-
+    #print btrace
+    #binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
+    binct = np.bincount(btrace.astype(int))
+    #print binct
     prev=0
     for j in xrange(4): #Last cut does not matter
             seg[j] = binct[j] + prev
@@ -88,7 +90,7 @@ def do_DTW(HMM, trans_mat, data):
     tr_sum = np.sum(tr_count,axis=1)
     tr_count = tr_count/tr_sum
     #tr_count = tr_count/np.sum(tr_count)
-    tr_count = np.log(tr_count)
+    tr_count = -np.log(tr_count)
 
 
     best_cost = dcost[dcost.shape[0]-1, 
@@ -105,6 +107,8 @@ if len(sys.argv) <= 1:
 
 def train_hmm(digit):
 
+
+    
     data0 = np.loadtxt(digit+'_0.mfcc')
     data1 = np.loadtxt(digit+'_1.mfcc')
     data2 = np.loadtxt(digit+'_2.mfcc')
@@ -118,22 +122,24 @@ def train_hmm(digit):
                      [data3.shape[0]],
                      [data4.shape[0]]]) * segs
 
+    
+    print segs
     # HMM: Our HMM will be a numpy matrix 10 x 39
     # because 5 states and one row for mean and one row for variance
     HMM = np.zeros((10,data0.shape[1]))
 
     # Transition probabilities
-    trans_mat = np.array([[0.000001, 0.0000001, 1.0],
-                          [0.000001, 0.5, 0.5],
-                          [0.7, 0.15, 0.15],
-                          [0.7, 0.15, 0.15],
-                          [0.7, 0.15, 0.15],
-                          [0.5, 0.2, 0],
-                          [0.3, 0, 0]])
+    trans_mat = np.array([[0.0000000001, 0.00000000001, 1.0],
+                          [0.0000000001, 0.5, 0.5],
+                          [0.6, 0.2, 0.2],
+                          [0.6, 0.2, 0.2],
+                          [0.6, 0.2, 0.2],
+                          [0.5, 0.5, 0.0],
+                          [1.0, 0.0, 0.0]])
 
     # Convert to distance
-    trans_mat = - np.log(trans_mat) # Will give warnings
-    
+    #trans_mat = - np.log(trans_mat) # Will give warnings
+    trans_mat = - np.log(trans_mat)
          
     # Extract appropriate sections for each state
     state1 = np.concatenate((data0[:segs[0][0],:],
@@ -144,8 +150,7 @@ def train_hmm(digit):
 
     HMM[0][:] = np.mean(state1,axis=0)
     HMM[1][:] = np.diag(np.corrcoef(state1, rowvar=0))
-
-
+    #HMM[1][:] = np.diag(np.cov(state1, rowvar=0))
 
     state1 = np.concatenate((data0[segs[0][0]:segs[0][1],:],
                              data1[segs[1][0]:segs[1][1],:],
@@ -155,6 +160,7 @@ def train_hmm(digit):
 
     HMM[2][:] = np.mean(state1,axis=0)
     HMM[3][:] = np.diag(np.corrcoef(state1, rowvar=0))
+    #HMM[3][:] = np.diag(np.cov(state1, rowvar=0))
     
 
 
@@ -166,7 +172,7 @@ def train_hmm(digit):
 
     HMM[4][:] = np.mean(state1,axis=0)
     HMM[5][:] = np.diag(np.corrcoef(state1, rowvar=0))
-
+    #HMM[5][:] = np.diag(np.cov(state1, rowvar=0))
 
 
     state1 = np.concatenate((data0[segs[0][2]:segs[0][3],:],
@@ -177,7 +183,7 @@ def train_hmm(digit):
 
     HMM[6][:] = np.mean(state1,axis=0)
     HMM[7][:] = np.diag(np.corrcoef(state1, rowvar=0))
-    
+    #HMM[7][:] = np.diag(np.cov(state1, rowvar=0))
 
 
     state1 = np.concatenate((data0[segs[0][3]:,:],
@@ -188,7 +194,7 @@ def train_hmm(digit):
 
     HMM[8][:] = np.mean(state1,axis=0)
     HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
-
+    #HMM[9][:] = np.diag(np.cov(state1, rowvar=0))
     best_overall_cost = np.inf
     best_overall_segs = None
     best_overall_trans = None
@@ -202,7 +208,7 @@ def train_hmm(digit):
         new_segs3, new_tr3, best_cost3 = do_DTW(HMM,trans_mat,data3)
         new_segs4, new_tr4, best_cost4 = do_DTW(HMM,trans_mat,data4)
 
-        avg_best_cost = 0.25 * (best_cost0 + best_cost1 + best_cost2
+        avg_best_cost = 0.20 * (best_cost0 + best_cost1 + best_cost2
                                 + best_cost3 + best_cost4)
 
         print 'Iteration',i,' cost: ',avg_best_cost
@@ -214,7 +220,7 @@ def train_hmm(digit):
                                new_segs3.transpose(),
                                new_segs4.transpose()), axis=0)
 
-        trans_mat[2:,:] =  0.025* (new_tr0 + new_tr1 + new_tr2
+        trans_mat[2:,:] =  0.20* (new_tr0 + new_tr1 + new_tr2
                                                     + new_tr3 + new_tr4)
         
         # Extract appropriate sections for each state
@@ -262,12 +268,17 @@ def train_hmm(digit):
     
 
 
-        state1 = np.concatenate((data0[segs[0][3]-1:,:],
-                                 data1[segs[1][3]-1:,:],
-                                 data2[segs[2][3]-1:,:],
-                                 data3[segs[3][3]-1:,:],
-                                 data4[segs[4][3]-1:,:]),axis=0)
-
+        state1 = np.concatenate((data0[segs[0][3]:,:],
+                                 data1[segs[1][3]:,:],
+                                 data2[segs[2][3]:,:],
+                                 data3[segs[3][3]:,:],
+                                 data4[segs[4][3]:,:]),axis=0)
+        #print data0[segs[0][3]:,:].shape
+        #print data1[segs[0][3]:,:].shape
+        #print data2[segs[0][3]:,:].shape
+        #print data3[segs[0][3]:,:].shape
+        #print data4[segs[0][3]:,:].shape
+        #print state1.shape
         HMM[8][:] = np.mean(state1,axis=0)
         HMM[9][:] = np.diag(np.corrcoef(state1, rowvar=0))
 
