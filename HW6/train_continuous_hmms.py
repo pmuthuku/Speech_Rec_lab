@@ -72,23 +72,209 @@ class hmm:
                                    next_next_trans=trans_prob[i][2]))
                 j = j + 2
 
+
         pass
-            
+
+MODEL_DIR_NAME = 'models_a'
+
+NO_OF_LEVELS = 1
+NO_OF_HMM = 10
+NO_OF_STATES = 5
+
+trans_names = [MODEL_DIR_NAME + '/0.trans',
+               MODEL_DIR_NAME + '/1.trans',
+               MODEL_DIR_NAME + '/2.trans',
+               MODEL_DIR_NAME + '/3.trans',
+               MODEL_DIR_NAME + '/4.trans',
+               MODEL_DIR_NAME + '/5.trans',
+               MODEL_DIR_NAME + '/6.trans',
+               MODEL_DIR_NAME + '/7.trans',
+               MODEL_DIR_NAME + '/8.trans',
+               MODEL_DIR_NAME + '/9.trans',
+               MODEL_DIR_NAME + '/sil.trans'
+];
+hmm_names = [MODEL_DIR_NAME + '/0.hmm',
+             MODEL_DIR_NAME + '/1.hmm',
+             MODEL_DIR_NAME + '/2.hmm',
+             MODEL_DIR_NAME + '/3.hmm',
+             MODEL_DIR_NAME + '/4.hmm',
+             MODEL_DIR_NAME + '/5.hmm',
+             MODEL_DIR_NAME + '/6.hmm',
+             MODEL_DIR_NAME + '/7.hmm',
+             MODEL_DIR_NAME + '/8.hmm',
+             MODEL_DIR_NAME + '/9.hmm',
+             MODEL_DIR_NAME + '/sil.hmm'
+];
+
+mu_list = [np.zeros((NO_OF_STATES, 39)) for x in range(NO_OF_HMM + 1)]
+sigma_list = [np.zeros((NO_OF_STATES, 39)) for x in range(NO_OF_HMM + 1)]
+
+trans_list = []
+
+for hmm_idx, hmm_file in enumerate(hmm_names):
+    f = np.loadtxt(hmm_file)
+    for i in range(NO_OF_STATES):
+        mu_list[hmm_idx][i] = f[i * 2]
+        sigma_list[hmm_idx][i] = f[i * 2 + 1]
+
+for trns_idx, trans_file in enumerate(trans_names):
+    f = np.loadtxt(trans_file)
+    trans = np.empty((NO_OF_STATES, NO_OF_STATES))
+    trans.fill(np.inf) # comment out for +log case
+    for j in range(NO_OF_STATES):
+        if j > 2:
+            subst = f[2 + j, 0:5 - j]
+        else:
+            subst = f[2 + j, :]
+
+        trans[j, j:min(j + 3, NO_OF_STATES)] = subst#np.delete(f[2+j, :], np.where(f[2+j, :] == np.inf), axis=0)
+    trans_list[len(trans_list):] = [trans]
+
+
+class graph:
+    template_nodes = []
+
+    def add_node(self, template_node):
+        if (len(self.template_nodes) <= template_node.identifier[3]):
+            self.template_nodes.append([])
+        self.template_nodes[template_node.identifier[3]].append(template_node)
+
+    def find_node_by(self, level_no, hmm_no, state_no, time_seq=-1):
+        this_time = self.template_nodes[time_seq]
+
+        this_level = list(filter(lambda _: _.identifier[0] in level_no, this_time))
+        this_hmm = list(filter(lambda _: _.identifier[1] in hmm_no, this_level))
+        this_state = list(filter(lambda _: _.identifier[2] in state_no, this_hmm))
+        return this_state
+
+def calculate_C(xn, mu, sigma):
+    inv_cov = np.linalg.inv(np.diagflat(sigma))
+    tmp_dist = scipy.spatial.distance.cdist(np.matrix(mu), np.matrix(xn),
+                                            #          'euclidean')
+                                            'mahalanobis', VI=inv_cov)
+    C = (0.5*tmp_dist)+(0.5*np.log(np.prod(sigma)))+(19.5*np.log(2*np.pi))
+    return C
+
+
+def calculate_P(parents, identifier, C):
+    if len(parents) == 0:
+        return (C, None)
+
+    my_hmm_no = identifier[1]
+    my_state_no = identifier[2]
+
+    best_P_prev = np.inf
+    path_idx = -1
+    # print "node id --> {0}".format(identifier)
+    for par_idx, parent in enumerate(parents):
+        parent_state_no = parent.identifier[2]
+        parent_hmm_no = parent.identifier[1]
+        if my_hmm_no == -1:
+            trans_cost = 0#-np.log(1)
+        # elif my_state_no == 0 and my_hmm_no == 10:
+        #     trans_cost = -np.log(0.5)
+        elif parent_hmm_no == -1:
+            trans_cost = 0#-np.log(1)
+        else :
+            trans_cost = trans_list[my_hmm_no][parent_state_no, my_state_no]
+
+        tr_cost = parent.P + trans_cost
+        # print "Parent {0}, {1}-->tr_cost:{2}, parent_P:{3}".format(par_idx, parent.identifier, tr_cost, parent.P)
+        if tr_cost < best_P_prev:
+            best_P_prev = tr_cost
+            path_idx = par_idx
+    # print "\n"
+
+    return (best_P_prev + C, parents[path_idx])
+
+class template_node:
+    def __init__(self, level_no, HMM_no, state_no, seq, time=-1, non_emitting=False):
+        if (time == 0):
+            self.parents = []
+        elif (level_no == 0 and non_emitting == True):
+            self.parents = []
+        elif (non_emitting == True):
+            self.parents = t_graph.find_node_by([level_no - 1], range(NO_OF_HMM), [NO_OF_STATES - 1], time_seq=time)
+        elif (state_no == 0):
+            self.parents = t_graph.find_node_by([level_no], [-1, HMM_no], [0], time_seq=time - 1)
+        elif (state_no == 1):
+            self.parents = t_graph.find_node_by([level_no], [HMM_no], range(state_no - 1, state_no + 1),
+                                                time_seq=time - 1)
+        elif (state_no > 1):
+            self.parents = t_graph.find_node_by([level_no], [HMM_no], range(state_no - 2, state_no + 1),
+                                                time_seq=time - 1)
+        if (HMM_no != -1):
+            self.mu = mu_list[HMM_no][state_no]
+            self.sigma = sigma_list[HMM_no][state_no]
+        self.non_emitting = non_emitting
+        self.identifier = [level_no, HMM_no, state_no, time]
+
+        # Compute C
+        if(HMM_no != -1):
+            if time==0:
+                if state_no==0 and level_no==0:
+                    C = calculate_C(seq[time,:], self.mu, self.sigma)
+                else:
+                    #C=-1*np.inf
+                    C=np.inf
+            else:
+                C = calculate_C(seq[time,:], self.mu, self.sigma)
+        else:
+            if level_no == 0: #for third problem make it level_no ==0 and time==0
+                #C = -1*np.inf
+                C = np.inf
+            elif time == 0:
+                #C = -1*np.inf
+                C = np.inf
+            else:
+                C = 0
+        self.C = C
+        (self.P, self.best_parent) = calculate_P(self.parents, self.identifier, self.C)
+
+t_graph = None
 
 
 def train_hmm(mapped_symbs, filenm):
-    
+
+    global t_graph
+    t_graph = graph()
     hmms=[]
-    
+
+
     # Create HMM 
-    for i in xrange(len(mapped_symbs)):
-        hmms.append(hmm(symbol=mapped_symbs[i]))
+    # for i in xrange(len(mapped_symbs)):
+    #     hmms.append(hmm(symbol=mapped_symbs[i]))
 
 
     # Read in filenm
     data = np.loadtxt(filenm)
+    NO_OF_TIME_SEQ = np.shape(data)[0]
+
+    for i in range(NO_OF_TIME_SEQ):
+        for j in range(len(mapped_symbs)):
+            t_graph.add_node(template_node(time=i, HMM_no=-1,level_no=j, state_no=0, non_emitting=True, seq=data))
+            for k in range(NO_OF_STATES):
+                t_graph.add_node(template_node(time=i, HMM_no=int(mapped_symbs[j]),level_no=j, state_no=k, seq=data))
+        t_graph.add_node(template_node(time=i, HMM_no=-1, level_no=len(mapped_symbs),state_no=0, non_emitting=True, seq=data))
+
+    result = np.array([])
+
+    last_frame = t_graph.template_nodes[NO_OF_TIME_SEQ - 1]#[-1]
+    curr_nod = last_frame[-1]
+    while curr_nod.identifier[3] != 0:
+        best_par = curr_nod.best_parent
+        result = np.append(result, curr_nod.identifier[1])
+        curr_nod = curr_nod.best_parent
 
 
+    boundary = np.where(result == -1)[0]
+    boundary = np.append(boundary, -1)
+    print result, boundary
+
+    segment_list = []
+    for i in range(len(mapped_symbs)):
+        segment = data[boundary[i]:boundary[i+1], :]
+        segment_list.append(segment)
     # Create Matrix with means for cdist
     # Let's ignore the variances since they are all 1 anyway
     mean_matrix = np.zeros([len(hmms)*hmms[0].num_states,39])
@@ -213,13 +399,6 @@ def train_hmm(mapped_symbs, filenm):
     btrace = btrace -2
 
     binct = np.bincount(btrace.astype(np.int64,casting='unsafe'))
-    
-
-    
-
-    pass
-
-
 
 def train_cont_hmms(transcrps, dirname):
     
@@ -240,10 +419,11 @@ def train_cont_hmms(transcrps, dirname):
         # Put models together and train
         train_hmm(mapped_symbs, fullname)
 
-if len(sys.argv) <=2:
-    print "Usage:\npython train_continuous_hmms.py TRANSCRIPs DIR"
-    print "Assumes that the models/ directory exists\n"
-    exit(0)
+# if len(sys.argv) <=2:
+#     print "Usage:\npython train_continuous_hmms.py TRANSCRIPs DIR"
+#     print "Assumes that the models/ directory exists\n"
+#     exit(0)
 
 if __name__ == '__main__':
-    train_cont_hmms(sys.argv[1],sys.argv[2])
+    # train_cont_hmms(sys.argv[1],sys.argv[2])
+    train_cont_hmms('edit_cont_reco/transcrp','edit_cont_reco')
