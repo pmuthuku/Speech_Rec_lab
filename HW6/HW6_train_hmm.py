@@ -497,4 +497,5 @@ def train_cont_hmms(transcrps, dirname):
 
 if __name__ == '__main__':
     # train_cont_hmms(sys.argv[1],sys.argv[2])
+    #print sys.argv[2]
     train_cont_hmms(sys.argv[1],sys.argv[2])
