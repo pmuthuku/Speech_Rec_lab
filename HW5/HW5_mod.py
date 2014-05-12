@@ -3,6 +3,7 @@ import time
 import copy
 import numpy as np
 import scipy.spatial.distance
+import random
 np.set_printoptions(threshold='nan', precision=3)
 
 
@@ -202,7 +203,7 @@ def calculate_P(parents, identifier, C):
         if  my_hmm_no == -1:# or parent_hmm_no==-1: # if parent is non-emitting then transition probability log is 0 but check this as insta. trans is from emitt to \non-emmiting. Non-emiitting to emmiting is computed on next frame
             trans_cost= 0
         elif parent_hmm_no == -1:
-            trans_cost=np.log(1.0/10.0)
+            trans_cost=-np.log(1.0/10.0)
         else:
             trans_cost= trans_list[my_hmm_no][parent_state_no, my_state_no]
 
@@ -261,29 +262,30 @@ class template_node:
 
 
 
-
-
 def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
     global t_graph
     t_graph = graph()
     global input_seq
 
     fp = open(RUSULTS_FILE_NAME, 'a')
-
-    #input_seq = [np.zeros((39,1)) for _ in range(NO_OF_TIME_SEQ)]
+    print file_name
+    
     input_seq = np.loadtxt(file_name)#.transpose()
     #input_seq = np.asarray(input_seq)
     #input_seq.shape
     NO_OF_TIME_SEQ = input_seq.shape[0]
     #print NO_OF_TIME_SEQ
     #pass
-
-
+    st=time.time()
     kk=0
     result = np.array([])
+    #if len(file_number)==7:
+    #    vx=range(1,11)
+    #    random.shuffle(vx)
+    #    if vx[0] <= 7:
+    #        NO_OF_LEVELS = 7
     for t in range(0, NO_OF_TIME_SEQ):
         #print t
-        st=time.time()
         for i in range(0, NO_OF_LEVELS):
             t_graph.add_node(template_node(i, -1, 0, time=t, non_emitting=True))
             for j in range(0, NO_OF_HMM):
@@ -291,7 +293,7 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
                     t_graph.add_node(template_node(i, j, k, time=t))
                     kk=kk+1
         t_graph.add_node(template_node(NO_OF_LEVELS, -1, 0, time=t, non_emitting=True))
-        et=time.time()
+        
         #print et-st
     # t_graph.find_node_by([0], [1], [0])
     #
@@ -308,6 +310,7 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
     tt=NO_OF_TIME_SEQ
     last_frame=t_graph.template_nodes[NO_OF_TIME_SEQ - 1]#[-1]
     curr_nod = last_frame[-1]
+    total_cost = curr_nod.P
     while curr_nod.identifier[3] != 0:
         best_par=curr_nod.best_parent
         print '{0}--->{1}---->{2}--->{3}--->{4}'.format( curr_nod.identifier[3],curr_nod.identifier,best_par.identifier,curr_nod.P,curr_nod.C)
@@ -331,24 +334,30 @@ def main(file_name='new_recordings/anurag_2.mfcc', file_number = 0):
     #result = np.delete(result, np.where(result == -1))[::-1]
     resultf=''
     for x in result:
-        resultf=resultf+str(x)+' '
+        resultf=resultf+str(x)#+' '
     
-    print 'Original -- > {0}'.format(correct_pronounce[file_number])
+    #print 'Original -- > {0}'.format(correct_pronounce[int(file_number]))
+    print 'Original -- > {0}'.format(file_number)
     print 'Detected -- > {0}'.format(resultf)
     #print 'Detected---{0}'.format(result)
     #print result
     #print 'Original---{0}'.format(correct_pronounce[file_number])
-    fp.write(file_name + '\n     Recognized as   -->     ' + str(result) + '\n     Correct Result  -->     '+correct_pronounce[file_number] + '\n')
+    #fp.write(file_name + '\n     Recognized as   -->     ' + str(result) + '\n     Correct Result  -->     '+correct_pronounce[file_number] + '\n')
+    et=time.time()
+    print et-st
     fp.close()
-
+    #t_graph = None
+    #input_seq =None
+    return total_cost,resultf
+    
 if __name__ == "__main__":
     #fp = open(RUSULTS_FILE_NAME, 'w')
     #fp.close()
 
     #for audio_file_number, audio_file in enumerate(audio_file_mfcc_list):
     #print "Running"
-    audio_file_number=int(sys.argv[1])
+    audio_file_number=sys.argv[1]
     audio_file=sys.argv[2]
     #print audio_file_number
     #print audio_file
-    main(audio_file, audio_file_number)
+    tcost,res=main(audio_file, audio_file_number)
