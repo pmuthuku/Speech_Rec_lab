@@ -31,8 +31,7 @@ def main(argv):
         st=time.clock()
         inpdat=numpy.loadtxt(argv[2])
         cost=[]
-        #trlist=range(5,5+int(argv[3]))
-        trl=range(5,10)
+        trl=range(0,5)
         random.shuffle(trl)
         trlist=trl[0:int(argv[3])]
         for i in range(0,10):

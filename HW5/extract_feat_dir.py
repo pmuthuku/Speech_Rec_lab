@@ -19,6 +19,7 @@ def get_frames(speech_sig, frame_length, frame_shift):
     
     speech_frames =[]
     start_pos = 0
+
     while True:
         windowed_frame = speech_sig_zpad[start_pos:start_pos+frame_length]* numpy.hamming(frame_length)
         speech_frames.append(windowed_frame)
@@ -27,8 +28,6 @@ def get_frames(speech_sig, frame_length, frame_shift):
             break
 
     return numpy.array(speech_frames)
-
-
 
 def gen_mel_filts(num_filts, framelength, samp_freq):
 

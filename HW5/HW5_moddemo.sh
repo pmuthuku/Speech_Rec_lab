@@ -8,7 +8,7 @@ i=$1
 echo $i
 echo ${audio_files[$i]}
 flnam=${audio_files[$i]}
- echo $flnam
+echo $flnam
 #echo $i
 python HW5_mod.py $i $flnam
 #done

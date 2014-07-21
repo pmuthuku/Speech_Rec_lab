@@ -4,9 +4,9 @@ import numpy
 import struct
 import math
 
-if len(sys.argv) < 2:
-    print("Extracts MFCCs from a wave file.\nUsage: %s filename.wav\n" % sys.argv[0])
-    sys.exit(-1)
+# if len(sys.argv) < 2:
+#     print("Extracts MFCCs from a wave file.\nUsage: %s filename.wav\n" % sys.argv[0])
+#     sys.exit(-1)
 
 
 def get_frames(speech_sig, frame_length, frame_shift):
@@ -70,7 +70,8 @@ def gen_mel_filts(num_filts, framelength, samp_freq):
 
 
 
-wf = wave.open(sys.argv[1], 'rb')
+# wf = wave.open(sys.argv[1], 'rb')
+wf = wave.open("right_output.wav", 'rb')
 
 samp_rate = wf.getframerate()
 

@@ -6,15 +6,13 @@ import scipy.spatial.distance
 import random
 np.set_printoptions(threshold='nan', precision=3)
 
-
-
 MODEL_DIR_NAME = 'models_a'
 #MODEL_DIR_NAME = 'model_euclidean_withconst_cov'
 #MODEL_DIR_NAME = 'model_mahalanobis_withconst_cov'
 #MODEL_DIR_NAME = 'model_euclidean_withoutconst_cov'
-# MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_cov'
+#MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_cov'
 #MODEL_DIR_NAME = 'model_euclidean_withconst_corrcoef'
-# MODEL_DIR_NAME = 'model_mahalanobis_withconst_corrcoef'
+#MODEL_DIR_NAME = 'model_mahalanobis_withconst_corrcoef'
 #MODEL_DIR_NAME = 'model_euclidean_withoutconst_corrcoef'
 #MODEL_DIR_NAME = 'model_mahalanobis_withoutconst_ccorrcoef'
 
